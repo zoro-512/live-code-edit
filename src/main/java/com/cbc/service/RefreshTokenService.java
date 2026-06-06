@@ -1,6 +1,8 @@
 package com.cbc.service;
 
 import com.cbc.entity.RefreshToken;
+import com.cbc.exception.TokenRefreshException;
+import com.cbc.exception.UserNotFoundException;
 import com.cbc.repository.RefreshTokenRepository;
 import com.cbc.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +37,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = new RefreshToken();
 
         var user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         refreshTokenRepository.deleteByUser(user);
 
@@ -50,7 +52,7 @@ public class RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(token);
-            throw new RuntimeException("Refresh token has expired. Please log in again.");
+            throw new TokenRefreshException("Refresh token has expired. Please log in again.");
         }
         return token;
     }
@@ -58,7 +60,7 @@ public class RefreshTokenService {
     @Transactional
     public void deleteByUserId(String email) {
         var user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
         refreshTokenRepository.deleteByUser(user);
     }
 }

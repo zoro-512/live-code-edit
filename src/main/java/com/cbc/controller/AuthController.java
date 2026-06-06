@@ -5,6 +5,7 @@ import com.cbc.dto.LoginReq;
 import com.cbc.dto.SignupReq;
 import com.cbc.dto.TokenRefreshRequest;
 import com.cbc.entity.RefreshToken;
+import com.cbc.exception.TokenRefreshException;
 import com.cbc.service.AuthDetailServiceImplementation;
 import com.cbc.service.AuthService;
 import com.cbc.service.RefreshTokenService;
@@ -63,6 +64,6 @@ public class AuthController {
                     String token = jwtUtils.generateToken(user.getEmail());
                     return ResponseEntity.ok(new JwtResponse(token, requestRefreshToken, user.getEmail()));
                 })
-                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+                .orElseThrow(() -> new TokenRefreshException("Refresh token is not in database!"));
     }
 }

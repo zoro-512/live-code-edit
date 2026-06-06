@@ -3,6 +3,7 @@ package com.cbc.service;
 import com.cbc.dto.UserResponse;
 import com.cbc.dto.UserUpdateResponse;
 import com.cbc.entity.User;
+import com.cbc.exception.UserNotFoundException;
 import com.cbc.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,7 +18,7 @@ public class UserService {
 
     public UserResponse getCurrentUser(String email) {
         User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         UserResponse response = new UserResponse();
         response.setName(user.getName());
@@ -30,7 +31,7 @@ public class UserService {
 
     public UserResponse updateCurrentUser(String email, UserUpdateResponse userUpdateResponse) {
         User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(userUpdateResponse.getPassword() != null &&
                 !userUpdateResponse.getPassword().isBlank()) {
 
