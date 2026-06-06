@@ -1,2 +1,6 @@
-package com.cbc.entity;public enum Role {
+package com.cbc.entity;
+
+public enum Role {
+    USER,
+    ADMIN
 }
