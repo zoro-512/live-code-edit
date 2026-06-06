@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
 
@@ -19,11 +19,12 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String name;
+
     private String roomCode;
     private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
-    private String createdBy;
+    private User createdBy;
 
 }
