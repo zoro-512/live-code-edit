@@ -8,6 +8,8 @@ import lombok.Setter;
 import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -26,5 +28,8 @@ public class Room {
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    @ManyToMany(mappedBy = "rooms")
+    private List<User> joinedUsers = new ArrayList<>();
 
 }

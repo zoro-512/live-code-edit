@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -27,7 +28,13 @@ public class User {
     private Role role;
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "createdBy")
-    private List<Room> rooms;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_joined_rooms",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "room_id")
+    )
+    private List<Room> rooms = new ArrayList<>();
 
 }
+

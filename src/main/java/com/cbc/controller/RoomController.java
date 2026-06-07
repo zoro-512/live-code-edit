@@ -1,16 +1,16 @@
 package com.cbc.controller;
 
 import com.cbc.dto.CreateRoomRequest;
+import com.cbc.dto.JoinRoomRequest;
 import com.cbc.dto.RoomResponse;
 import com.cbc.service.RoomService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/room")
@@ -24,6 +24,34 @@ public class RoomController {
         return ResponseEntity.ok(
                 roomService.createNewRoom(authentication.getName(),createRoomRequest)
         );
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<RoomResponse> joinRoom(Authentication authentication,@RequestBody JoinRoomRequest joinRoomRequest){
+        return ResponseEntity.ok(
+                roomService.joinRoom(authentication.getName(),joinRoomRequest)
+        );
+    }
+
+    @GetMapping("/myRooms")
+    public ResponseEntity<List<RoomResponse>> getRoom(Authentication authentication) {
+
+        return ResponseEntity.ok(
+                roomService.getMyRooms(authentication.getName())
+        );
+    }
+
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<String> deleteRoom(
+            @PathVariable Long roomId,
+            Authentication authentication) {
+
+        roomService.deleteRoom(
+                roomId,
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok("Room deleted successfully");
     }
 
 }
