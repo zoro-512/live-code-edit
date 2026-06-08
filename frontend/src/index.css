@@ -43,187 +43,414 @@ body {
     user-select: none;
 }
 
-/* Authentication Portal Styles */
+/* /* Authentication Portal Styles */
 .auth-wrapper {
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--bg-darker);
+    background-color: #0c0d10;
+    /* Coding workspace backdrop with grid pattern and radial flows */
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(0, 122, 204, 0.04) 0%, transparent 40%);
-}
-
-.auth-container {
-    width: 420px;
-    background-color: var(--bg-dark);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+        radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 10% 20%, rgba(0, 122, 204, 0.06) 0%, transparent 40%),
+        linear-gradient(rgba(12, 13, 16, 0.8), rgba(12, 13, 16, 0.8)),
+        radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 0);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
+    position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
 }
 
-.auth-header-bar {
-    height: 32px;
-    background-color: var(--bg-sidebar);
-    border-bottom: 1px solid var(--border-color);
+.auth-wrapper.flex-column {
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Brand Header on Top */
+.auth-brand-header {
     display: flex;
     align-items: center;
-    padding: 0 12px;
-    position: relative;
+    gap: 12px;
+    margin-bottom: 4px;
+    animation: brandHeaderEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.window-dots {
+.auth-brand-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: var(--font-main);
+}
+
+.auth-brand-header svg {
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
+}
+
+@keyframes brandHeaderEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Code Editor Card Design */
+.code-editor-card {
+    width: 800px;
+    height: auto;
+    background-color: #1e1e1e; /* VS Code main background */
+    border: 1px solid #333333;
+    border-radius: 8px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(99, 102, 241, 0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: editorEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes editorEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Editor Tab Header */
+.editor-tab-header {
+    height: 38px;
+    background-color: #252526; /* VS Code sidebar/tab background */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e1e1e;
+    user-select: none;
+}
+
+.editor-tabs-container {
+    display: flex;
+    height: 100%;
+}
+
+.editor-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 18px;
+    height: 100%;
+    background-color: #2d2d2d;
+    border-right: 1px solid #252526;
+    color: #969696;
+    font-size: 13px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+}
+
+.editor-tab:hover {
+    background-color: #2b2b2b;
+    color: #e1e1e1;
+}
+
+.editor-tab.active {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border-top: 2px solid #6366f1; /* Glowing active indicator */
+}
+
+.file-icon {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 4px;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+.file-icon.java {
+    background-color: #f89820; /* Java Orange */
+    color: #ffffff;
+}
+
+.file-icon.js {
+    background-color: #f7df1e; /* JS Yellow */
+    color: #000000;
+}
+
+.file-icon.py {
+    background-color: #3572a5; /* Python Blue */
+    color: #ffd43b;
+}
+
+.tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #6366f1;
+    margin-left: 4px;
+}
+
+.editor-actions-top {
     display: flex;
     gap: 6px;
+    margin-right: 16px;
 }
 
-.window-dots .dot {
+.window-dot-mock {
     width: 10px;
     height: 10px;
     border-radius: 50%;
+    background-color: #333333;
+}
+.window-dot-mock.red { background-color: #ef4444; opacity: 0.8; }
+.window-dot-mock.yellow { background-color: #f59e0b; opacity: 0.8; }
+.window-dot-mock.green { background-color: #10b981; opacity: 0.8; }
+
+/* Editor Body Grid */
+.editor-body {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    background-color: #1e1e1e;
+    min-height: 380px;
+    position: relative;
 }
 
-.window-dots .dot.red { background-color: var(--red); }
-.window-dots .dot.yellow { background-color: var(--yellow); }
-.window-dots .dot.green { background-color: var(--green); }
-
-.window-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px;
-    color: var(--text-dark);
+/* Line Number Gutter */
+.editor-gutter {
+    background-color: #1e1e1e;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 24px 10px 24px 0;
+    user-select: none;
     font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 28px;
+    color: #858585;
 }
 
-.auth-content {
-    padding: 2.5rem;
+.line-num {
+    height: 28px;
+    text-align: right;
+    width: 100%;
+}
+
+/* Content Form Area */
+.editor-content-area {
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow-x: auto;
+}
+
+.code-form {
     display: flex;
     flex-direction: column;
 }
 
-.brand-logo {
+.code-line {
+    font-family: var(--font-mono);
+    font-size: 14.5px;
+    line-height: 28px;
+    white-space: pre;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 0.5rem;
+    color: #d4d4d4;
 }
 
-.brand-logo h1 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-light);
-    letter-spacing: 2px;
+.code-line.indented {
+    padding-left: 28px;
 }
 
-.brand-subtitle {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-dark);
-    margin-bottom: 2rem;
+.code-line.double-indented {
+    padding-left: 56px;
 }
 
-.auth-form {
+.code-line.triple-indented {
+    padding-left: 84px;
+}
+
+/* Syntax Highlighting Colors */
+.code-line .keyword {
+    color: #c586c0; /* Purple for keywords */
+}
+
+.code-line .variable {
+    color: #9cdcfe; /* Light blue for variables */
+}
+
+.code-line .string {
+    color: #ce9178; /* Orange-brown for string literals */
+}
+
+.code-line .comment {
+    color: #6a9955; /* Green for comments */
+    font-style: italic;
+}
+
+.code-line .punctuation {
+    color: #ffd700; /* Yellow brackets/parens */
+}
+
+.code-line .annotation {
+    color: #e5c07b; /* Gold/yellowish for annotations */
+}
+
+.code-line .class-name {
+    color: #4ec9b0; /* Teal for classes */
+}
+
+.code-line .function {
+    color: #dcdcaa; /* Yellowish for methods */
+}
+
+.code-line .key {
+    color: #9cdcfe; /* Light blue for object keys */
+}
+
+/* Code Inline Inputs */
+.code-input {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.3) !important;
+    color: #ce9178 !important; /* String orange */
+    font-family: var(--font-mono) !important;
+    font-size: 14px !important;
+    padding: 0 4px !important;
+    margin: 0 4px !important;
+    width: 220px;
+    outline: none !important;
+    height: 22px !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease;
+}
+
+.code-input::placeholder {
+    color: rgba(206, 145, 120, 0.45);
+    font-style: italic;
+}
+
+.code-input:focus {
+    border-bottom: 1px solid #6366f1 !important;
+    background-color: rgba(99, 102, 241, 0.05) !important;
+    box-shadow: none !important;
+}
+
+/* In-line Execute Button */
+.submit-line-embedded {
     display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
+    align-items: center;
+    gap: 16px;
+    margin-top: 4px;
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    font-size: 11px;
-    color: var(--text-dark);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
-.form-group input {
-    background-color: var(--bg-darker);
-    border: 1px solid var(--border-color);
-    color: var(--text-light);
-    padding: 10px 12px;
-    border-radius: 4px;
-    font-size: 13px;
-    outline: none;
-    font-family: var(--font-main);
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus {
-    border-color: var(--primary);
-}
-
-.btn-auth-submit {
-    background-color: var(--primary);
-    color: var(--text-light);
+.btn-code-submit {
+    background-color: #6366f1;
+    color: #ffffff;
     border: none;
-    padding: 12px;
     border-radius: 4px;
-    font-size: 14px;
-    font-weight: 600;
+    padding: 3px 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
-    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    transition: all 0.15s ease;
+}
+
+.btn-code-submit:hover {
+    background-color: #4f46e5;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-code-submit:active {
+    transform: translateY(0);
+}
+
+.btn-code-submit:disabled {
+    background-color: #333333;
+    color: #666666;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.play-icon {
+    font-size: 10px;
+}
+
+/* Auth messages in code layout */
+.editor-content-area .auth-message {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 10px 14px;
+    border-radius: 6px;
+}
+
+.editor-content-area .auth-message.error {
+    background-color: rgba(239, 68, 68, 0.07);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.editor-content-area .auth-message.success {
+    background-color: rgba(16, 185, 129, 0.07);
+    color: #a7f3d0;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+/* Bottom Status Bar */
+.editor-status-bar {
+    height: 24px;
+    background-color: #007acc; /* VS Code blue status bar */
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11.5px;
+    font-family: var(--font-main);
+    user-select: none;
+}
+
+.status-bar-left, .status-bar-right {
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
+    gap: 16px;
 }
 
-.btn-auth-submit:hover {
-    background-color: var(--primary-hover);
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
-.btn-auth-submit:disabled {
-    background-color: var(--border-color);
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.auth-message {
-    font-size: 12px;
-    padding: 8px 12px;
-    border-radius: 4px;
-    line-height: 1.4;
-}
-
-.auth-message.error {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.auth-message.success {
-    background-color: rgba(16, 185, 129, 0.1);
-    color: #a7f3d0;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.auth-toggle {
-    margin-top: 1.5rem;
-    text-align: center;
-    font-size: 13px;
-    color: var(--text-dark);
-}
-
-.auth-toggle span {
-    color: var(--primary);
+.status-item.clickable {
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
 }
 
-.auth-toggle span:hover {
+.status-item.clickable:hover {
     text-decoration: underline;
+}
+
+.status-item.green-check {
+    color: #a7f3d0;
 }
 
 /* VS Code App Grid Layout */

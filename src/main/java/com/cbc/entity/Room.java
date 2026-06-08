@@ -23,7 +23,13 @@ public class Room {
     private String name;
 
     private String roomCode;
+
     private LocalDateTime createdAt;
+
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String currentCode;
 
     @ManyToOne
     @JoinColumn(name = "created_by")

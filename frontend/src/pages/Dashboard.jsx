@@ -163,7 +163,7 @@ const Dashboard = () => {
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 2L2 22H22L12 2Z" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-                        <h2>Antigravity Live Code Workspace</h2>
+                        <h2>Collaborative Code Editor</h2>
                     </div>
 
                     <div className="shortcut-group">

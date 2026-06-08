@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -101,18 +100,39 @@ public class RoomService {
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() ->
                         new RuntimeException("Room not found"));
+
         if (!room.getCreatedBy().getEmail().equals(email)) {
             throw new RuntimeException(
                     "You are not authorized to delete this room"
             );
         }
 
-        List<User> joinedUsers = new ArrayList<>(room.getJoinedUsers());
-        for(User user : joinedUsers) {
-            user.getRooms().remove(room);
-            userRepo.save(user);
-        }
+        roomRepo.deleteRoomAssociations(roomId);
         roomRepo.delete(room);
 
     }
+
+    @Transactional
+    public void saveCode(Long roomId, String code) {
+
+        Room room = roomRepo.findById(roomId)
+                .orElseThrow(() ->
+                        new RuntimeException("Room not found"));
+
+        room.setCurrentCode(code);
+
+        roomRepo.save(room);
+    }
+
+    public String getCode(Long roomId) {
+
+        Room room = roomRepo.findById(roomId)
+                .orElseThrow(() ->
+                        new RuntimeException("Room not found"));
+
+        String code = room.getCurrentCode();
+        return code != null ? code : "// Welcome to the collaborative workspace!\n// Start coding here...";
+    }
+
+
 }

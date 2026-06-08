@@ -30,6 +30,9 @@ const Workspace = () => {
     const stompClientRef = useRef(null);
     const isRemoteChange = useRef(false);
 
+    // Ref for the debounced auto-save timer
+    const saveTimeoutRef = useRef(null);
+
     useEffect(() => {
         // Fetch room info if not passed in routing state (e.g., page refresh)
         if (!roomCode) {
@@ -44,12 +47,24 @@ const Workspace = () => {
                 .catch(err => console.error('Failed to load room details:', err));
         }
 
+        // Fetch saved code for this room
+        api.get(`/room/${roomId}/code`)
+            .then(response => {
+                if (response.data) {
+                    setEditorCode(response.data);
+                }
+            })
+            .catch(err => console.error('Failed to load room code:', err));
+
         // Establish WebSocket Connection
         connectWebSocket();
 
         // Cleanup on unmount
         return () => {
             disconnectWebSocket();
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
         };
     }, [roomId]);
 
@@ -145,6 +160,16 @@ const Workspace = () => {
         // Send local changes to all room members
         setEditorCode(value);
         broadcastCodeChange(value);
+
+        // Debounce saving the code to the database via REST API
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        
+        saveTimeoutRef.current = setTimeout(() => {
+            api.post(`/room/${roomId}/save`, { code: value })
+                .catch(err => console.error('Failed to auto-save code:', err));
+        }, 2000); // 2-second debounce interval
     };
 
     const broadcastCodeChange = (code) => {

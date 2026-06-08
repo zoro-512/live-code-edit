@@ -1,0 +1,40 @@
+package com.cbc.controller;
+
+import com.cbc.dto.CodeUpdateReq;
+import com.cbc.service.RoomService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/rooms")
+@RequiredArgsConstructor
+public class RoomCodeController {
+    @Autowired
+    private final RoomService roomService;
+
+    @PutMapping("/{roomId}/code")
+    public ResponseEntity<Void> saveCode(
+            @PathVariable Long roomId,
+            @RequestBody CodeUpdateReq req) {
+
+        roomService.saveCode(roomId, req.getCode());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{roomId}/code")
+    public ResponseEntity<CodeUpdateReq> getCode(
+            @PathVariable Long roomId) {
+
+        String code = roomService.getCode(roomId);
+
+        CodeUpdateReq response = new CodeUpdateReq();
+        response.setCode(code);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+}

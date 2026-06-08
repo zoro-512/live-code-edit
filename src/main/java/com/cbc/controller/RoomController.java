@@ -3,6 +3,7 @@ package com.cbc.controller;
 import com.cbc.dto.CreateRoomRequest;
 import com.cbc.dto.JoinRoomRequest;
 import com.cbc.dto.RoomResponse;
+import com.cbc.dto.SaveCodeRequest;
 import com.cbc.service.RoomService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,18 @@ public class RoomController {
         );
 
         return ResponseEntity.ok("Room deleted successfully");
+    }
+
+    @GetMapping("/{roomId}/code")
+    public ResponseEntity<String> getRoomCode(@PathVariable Long roomId) {
+        return ResponseEntity.ok(
+                roomService.getCode(roomId)
+        );
+    }
+    @PostMapping("/{roomId}/save")
+    public ResponseEntity<String> saveRoomCode(@PathVariable Long roomId, @RequestBody SaveCodeRequest request) {
+        roomService.saveCode(roomId, request.getCode());
+        return ResponseEntity.ok("Code saved successfully");
     }
 
 }
