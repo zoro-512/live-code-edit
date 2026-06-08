@@ -8,5 +8,5 @@ import lombok.Setter;
 @Setter
 public class CreateRoomRequest {
     @NotBlank
-    private String RoomName;
+    private String roomName;
 }
