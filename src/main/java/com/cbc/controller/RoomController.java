@@ -1,9 +1,9 @@
 package com.cbc.controller;
 
-import com.cbc.dto.CreateRoomRequest;
-import com.cbc.dto.JoinRoomRequest;
-import com.cbc.dto.RoomResponse;
-import com.cbc.dto.SaveCodeRequest;
+import com.cbc.dto.room.CreateRoomRequest;
+import com.cbc.dto.room.JoinRoomRequest;
+import com.cbc.dto.room.RoomResponse;
+import com.cbc.dto.code.SaveCodeRequest;
 import com.cbc.service.RoomService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

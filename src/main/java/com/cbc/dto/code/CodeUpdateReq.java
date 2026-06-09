@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.code;
 
 import lombok.Getter;
 import lombok.Setter;

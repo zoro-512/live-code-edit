@@ -1,6 +1,6 @@
 package com.cbc.webSocket;
 
-import com.cbc.dto.ChatMessage;
+import com.cbc.dto.code.ChatMessage;
 import com.cbc.entity.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

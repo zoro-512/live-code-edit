@@ -1,8 +1,8 @@
 package com.cbc.service;
 
-import com.cbc.dto.CreateRoomRequest;
-import com.cbc.dto.JoinRoomRequest;
-import com.cbc.dto.RoomResponse;
+import com.cbc.dto.room.CreateRoomRequest;
+import com.cbc.dto.room.JoinRoomRequest;
+import com.cbc.dto.room.RoomResponse;
 import com.cbc.entity.Room;
 import com.cbc.entity.User;
 import com.cbc.repository.RoomRepo;

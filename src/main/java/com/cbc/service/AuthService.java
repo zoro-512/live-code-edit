@@ -1,6 +1,6 @@
 package com.cbc.service;
 
-import com.cbc.dto.SignupReq;
+import com.cbc.dto.auth.SignupReq;
 import com.cbc.entity.Role;
 import com.cbc.entity.User;
 import com.cbc.repository.UserRepo;

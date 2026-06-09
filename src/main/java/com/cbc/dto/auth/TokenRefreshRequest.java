@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

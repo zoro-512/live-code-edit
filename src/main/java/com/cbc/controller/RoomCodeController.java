@@ -1,6 +1,6 @@
 package com.cbc.controller;
 
-import com.cbc.dto.CodeUpdateReq;
+import com.cbc.dto.code.CodeUpdateReq;
 import com.cbc.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.code;
 
 import com.cbc.entity.MessageType;
 import lombok.AllArgsConstructor;

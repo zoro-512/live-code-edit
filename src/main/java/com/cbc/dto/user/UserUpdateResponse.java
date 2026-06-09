@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.user;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

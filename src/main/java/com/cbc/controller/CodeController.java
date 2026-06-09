@@ -1,6 +1,6 @@
 package com.cbc.controller;
 
-import com.cbc.dto.ChatMessage;
+import com.cbc.dto.code.ChatMessage;
 import com.cbc.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;

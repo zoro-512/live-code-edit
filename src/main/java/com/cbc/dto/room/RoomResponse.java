@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.room;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,9 +1,9 @@
 package com.cbc.controller;
 
-import com.cbc.dto.JwtResponse;
-import com.cbc.dto.LoginReq;
-import com.cbc.dto.SignupReq;
-import com.cbc.dto.TokenRefreshRequest;
+import com.cbc.dto.auth.JwtResponse;
+import com.cbc.dto.auth.LoginReq;
+import com.cbc.dto.auth.SignupReq;
+import com.cbc.dto.auth.TokenRefreshRequest;
 import com.cbc.entity.RefreshToken;
 import com.cbc.exception.TokenRefreshException;
 import com.cbc.service.AuthDetailServiceImplementation;

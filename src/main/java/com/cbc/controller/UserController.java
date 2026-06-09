@@ -1,8 +1,8 @@
 package com.cbc.controller;
 
 
-import com.cbc.dto.UserResponse;
-import com.cbc.dto.UserUpdateResponse;
+import com.cbc.dto.user.UserResponse;
+import com.cbc.dto.user.UserUpdateResponse;
 import com.cbc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

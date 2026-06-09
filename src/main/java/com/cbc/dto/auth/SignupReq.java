@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.auth;
 
 import com.cbc.entity.Role;
 import jakarta.validation.constraints.Email;
@@ -24,6 +24,5 @@ public class SignupReq {
     private String password;
     private LocalDateTime createdAt;
     private Role role;
-
 
 }

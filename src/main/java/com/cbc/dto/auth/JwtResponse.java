@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.cbc.dto;
+package com.cbc.dto.user;
 
 import com.cbc.entity.Role;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,7 @@
 package com.cbc.service;
 
-import com.cbc.dto.UserResponse;
-import com.cbc.dto.UserUpdateResponse;
+import com.cbc.dto.user.UserResponse;
+import com.cbc.dto.user.UserUpdateResponse;
 import com.cbc.entity.User;
 import com.cbc.exception.UserNotFoundException;
 import com.cbc.repository.UserRepo;
