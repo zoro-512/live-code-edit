@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -18,19 +19,21 @@ public class JavaExecutor implements CodeExecutor {
         try {
             tempDir = Files.createTempDirectory("execution");
             Path javaFile = tempDir.resolve("Main.java");
-
+            String containerName ="exec-" + UUID.randomUUID();
             Files.writeString(
                     javaFile,
                     code,
                     StandardCharsets.UTF_8
             );
 
-            String hostPath = tempDir.toAbsolutePath().toString();
+            String hostPath = tempDir.toAbsolutePath().toString().replace('\\', '/');
             ProcessBuilder dockerBuilder =
                     new ProcessBuilder(
                             "docker",
                             "run",
                             "--rm",
+                            "--name",
+                            containerName,
                             "--memory=128m",
                             "--cpus=1",
                             "--network=none",
@@ -71,7 +74,11 @@ public class JavaExecutor implements CodeExecutor {
             if (!finished) {
 
                 process.destroyForcibly();
-
+                new ProcessBuilder(
+                        "docker",
+                        "kill",
+                        containerName
+                ).start().waitFor();
                 return ExecuteCodeResponse.builder()
                         .stdout("")
                         .stderr("Execution timed out")
