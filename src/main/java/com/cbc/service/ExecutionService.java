@@ -2,14 +2,14 @@ package com.cbc.service;
 
 import com.cbc.dto.Execution.ExecuteCodeRequest;
 import com.cbc.dto.Execution.ExecuteCodeResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ExecutionService {
 
-    private  JavaExecutor javaExecutor;
-
-
+    private final CodeExecutor javaExecutor;
 
     public ExecuteCodeResponse execute(ExecuteCodeRequest request) {
 
