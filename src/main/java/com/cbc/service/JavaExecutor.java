@@ -25,70 +25,67 @@ public class JavaExecutor implements CodeExecutor {
                     StandardCharsets.UTF_8
             );
 
-            Path compileStderrFile = tempDir.resolve("compile_stderr.txt");
+            String hostPath = tempDir.toAbsolutePath().toString();
+            ProcessBuilder dockerBuilder =
+                    new ProcessBuilder(
+                            "docker",
+                            "run",
+                            "--rm",
+                            "--memory=128m",
+                            "--cpus=1",
+                            "--network=none",
+                            "-v",
+                            hostPath + ":/app",
+                            "java-runner",
+                            "sh",
+                            "-c",
+                            "javac Main.java && java Main"
+                    );
+            Path stdoutFile = tempDir.resolve("stdout.txt");
 
-            ProcessBuilder compileBuilder = new ProcessBuilder("javac", "Main.java");
-            compileBuilder.directory(tempDir.toFile());
-            compileBuilder.redirectError(compileStderrFile.toFile());
+            Path stderrFile = tempDir.resolve("stderr.txt");
 
-            Process compileProcess = compileBuilder.start();
-            boolean compileFinished = compileProcess.waitFor(10, TimeUnit.SECONDS);
-            if (!compileFinished) {
-                compileProcess.destroyForcibly();
+            dockerBuilder.redirectOutput(
+                    stdoutFile.toFile()
+            );
+
+            dockerBuilder.redirectError(
+                    stderrFile.toFile()
+            );
+            long startTime =
+                    System.currentTimeMillis();
+
+            Process process =
+                    dockerBuilder.start();
+
+            boolean finished =
+                    process.waitFor(
+                            5,
+                            TimeUnit.SECONDS
+                    );
+
+            long executionTime =
+                    System.currentTimeMillis()
+                            - startTime;
+
+            if (!finished) {
+
+                process.destroyForcibly();
+
                 return ExecuteCodeResponse.builder()
                         .stdout("")
-                        .stderr("Compilation timed out.")
-                        .exitCode(-1)
-                        .executionTime(0L)
-                        .build();
-            }
-
-            int compileExitCode = compileProcess.exitValue();
-            if (compileExitCode != 0) {
-                String compileError = Files.readString(compileStderrFile, StandardCharsets.UTF_8);
-                return ExecuteCodeResponse.builder()
-                        .stdout("")
-                        .stderr(compileError)
-                        .exitCode(compileExitCode)
-                        .executionTime(0L)
-                        .build();
-            }
-
-            Path runStdoutFile = tempDir.resolve("run_stdout.txt");
-            Path runStderrFile = tempDir.resolve("run_stderr.txt");
-
-            ProcessBuilder runBuilder = new ProcessBuilder("java", "Main");
-            runBuilder.directory(tempDir.toFile());
-            runBuilder.redirectOutput(runStdoutFile.toFile());
-            runBuilder.redirectError(runStderrFile.toFile());
-
-            long startTime = System.currentTimeMillis();
-            Process runProcess = runBuilder.start();
-            boolean runFinished = runProcess.waitFor(5, TimeUnit.SECONDS);
-            long endTime = System.currentTimeMillis();
-            long executionTime = endTime - startTime;
-
-            if (!runFinished) {
-                runProcess.destroyForcibly();
-                return ExecuteCodeResponse.builder()
-                        .stdout("")
-                        .stderr("Execution timed out (5-second limit exceeded).")
+                        .stderr("Execution timed out")
                         .exitCode(-1)
                         .executionTime(executionTime)
                         .build();
             }
 
-            int exitCode = runProcess.exitValue();
-            String stdout = Files.readString(runStdoutFile, StandardCharsets.UTF_8);
-            String stderr = Files.readString(runStderrFile, StandardCharsets.UTF_8);
+            String stdout =  Files.readString(stdoutFile);
 
-            return ExecuteCodeResponse.builder()
-                    .stdout(stdout)
-                    .stderr(stderr)
-                    .exitCode(exitCode)
-                    .executionTime(executionTime)
-                    .build();
+            String stderr = Files.readString(stderrFile);
 
+            int exitCode = process.exitValue();
+            return  new ExecuteCodeResponse(stdout,stderr,exitCode,executionTime);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
