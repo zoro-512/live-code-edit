@@ -1,18 +1,19 @@
 package com.cbc.dto.Execution;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class ExecuteCodeResponse {
 
     private     String stdout;
     private      String stderr;
     private     Integer exitCode;
     private     Long executionTime;
+
+
+
 }
