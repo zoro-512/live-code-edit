@@ -31,9 +31,14 @@ public class SecurityConfigJWT {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/auth/**", "/ws/**").permitAll()
-//                        .requestMatchers("//**").authenticated()
-                        .anyRequest().authenticated()
+                                .requestMatchers(
+                                        "/auth/**", 
+                                        "/ws/**",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html"
+                                ).permitAll()
+                                .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
