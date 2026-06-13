@@ -4,7 +4,6 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-19-blue.svg?style=flat-square&logo=react)](https://react.dev/)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Orchestrated-blue.svg?style=flat-square&logo=docker)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 A premium, VS Code-inspired real-time collaborative coding workspace. It enables multiple developers to code together with live sync over WebSockets and securely execute Java programs inside a sandboxed Docker container environment.
 
