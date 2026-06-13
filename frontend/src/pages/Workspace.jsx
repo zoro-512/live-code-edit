@@ -26,6 +26,11 @@ const Workspace = () => {
     // Copy Feedback
     const [copied, setCopied] = useState(false);
 
+    // Execution States
+    const [isRunning, setIsRunning] = useState(false);
+    const [showTerminal, setShowTerminal] = useState(false);
+    const [terminalOutput, setTerminalOutput] = useState(null);
+
     // Refs for WebSocket client and remote state locks
     const stompClientRef = useRef(null);
     const isRemoteChange = useRef(false);
@@ -199,6 +204,50 @@ const Workspace = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleRunCode = async () => {
+        setIsRunning(true);
+        setShowTerminal(true);
+        setTerminalOutput(null);
+
+        try {
+            const response = await api.post('/execute/execute', {
+                sourceCode: editorCode,
+                language: language,
+                roomId: roomId
+            });
+
+            if (response.data) {
+                setTerminalOutput({
+                    stdout: response.data.stdout || '',
+                    stderr: response.data.stderr || '',
+                    exitCode: response.data.exitCode,
+                    executionTime: response.data.executionTime,
+                    error: null
+                });
+            } else {
+                setTerminalOutput({
+                    stdout: '',
+                    stderr: '',
+                    exitCode: null,
+                    executionTime: null,
+                    error: 'Error: Received empty response from code runner.'
+                });
+            }
+        } catch (err) {
+            console.error('Code execution failed:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Unknown network error occurred while running code.';
+            setTerminalOutput({
+                stdout: '',
+                stderr: '',
+                exitCode: null,
+                executionTime: null,
+                error: `Network Error: ${errorMessage}`
+            });
+        } finally {
+            setIsRunning(false);
+        }
+    };
+
     return (
         <div className="vs-app-layout">
             
@@ -296,6 +345,37 @@ const Workspace = () => {
                         <span>main.{language === 'javascript' ? 'js' : language === 'java' ? 'java' : language === 'html' ? 'html' : 'txt'}</span>
                     </div>
                     <div className="tab-actions">
+                        {/* Toggle Terminal Button */}
+                        <button 
+                            onClick={() => setShowTerminal(!showTerminal)} 
+                            className={`vs-terminal-toggle-btn ${showTerminal ? 'active' : ''}`}
+                            title="Toggle Output Panel"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="3" y1="15" x2="21" y2="15"/>
+                            </svg>
+                        </button>
+
+                        {/* Run Button (Only for Java language) */}
+                        {language === 'java' && (
+                            <button 
+                                onClick={handleRunCode} 
+                                disabled={isRunning} 
+                                className="vs-run-btn"
+                                title="Run Java Program"
+                            >
+                                {isRunning ? (
+                                    <div className="vs-loader-sm" />
+                                ) : (
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                )}
+                                <span>{isRunning ? 'Running...' : 'Run'}</span>
+                            </button>
+                        )}
+
                         <select 
                             value={language} 
                             onChange={(e) => setLanguage(e.target.value)} 
@@ -330,6 +410,63 @@ const Workspace = () => {
                         }}
                     />
                 </div>
+
+                {/* Bottom Terminal Pane */}
+                {showTerminal && (
+                    <div className="vs-terminal-pane">
+                        <div className="terminal-header">
+                            <div className="terminal-tabs">
+                                <span className="terminal-tab">Terminal / Output</span>
+                            </div>
+                            <div className="terminal-actions">
+                                <button className="terminal-clear-btn" onClick={() => setTerminalOutput(null)}>
+                                    Clear
+                                </button>
+                                <button className="terminal-close-btn" onClick={() => setShowTerminal(false)}>
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                        <div className="terminal-body">
+                            {isRunning && (
+                                <div className="terminal-loading">
+                                    <span className="vs-loader-sm" style={{ display: 'inline-block', marginRight: '8px', borderTopColor: 'var(--yellow)' }} />
+                                    Running code on secure Java runner...
+                                </div>
+                            )}
+                            {!isRunning && !terminalOutput && (
+                                <div className="terminal-placeholder">
+                                    Click the 'Run' button above to compile and execute your Java code.
+                                </div>
+                            )}
+                            {terminalOutput && (
+                                <div className="terminal-content">
+                                    {terminalOutput.error && (
+                                        <div className="terminal-line error">{terminalOutput.error}</div>
+                                    )}
+                                    {terminalOutput.stderr && (
+                                        <div className="terminal-line stderr">{terminalOutput.stderr}</div>
+                                    )}
+                                    {terminalOutput.stdout && (
+                                        <div className="terminal-line stdout">{terminalOutput.stdout}</div>
+                                    )}
+                                    <div className="terminal-meta">
+                                        {terminalOutput.exitCode !== null && (
+                                            <span className={`meta-item exit-code ${terminalOutput.exitCode === 0 ? 'success' : 'fail'}`}>
+                                                Process exited with code {terminalOutput.exitCode}
+                                            </span>
+                                        )}
+                                        {terminalOutput.executionTime !== null && (
+                                            <span className="meta-item time">
+                                                Time: {terminalOutput.executionTime}ms
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </main>
 
             {/* Bottom Status Bar */}

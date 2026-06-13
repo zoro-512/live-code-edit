@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  java-runner:
+    build:
+      context: ./docker-runner
+      dockerfile: Dockerfile
+    image: java-runner
+    entrypoint: ["echo", "java-runner image built successfully"]
+
+  db:
+    image: mysql:8.0
+    container_name: cbc-db
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - cbc-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cbc-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+    depends_on:
+      - db
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - cbc-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cbc-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - cbc-network
+
+networks:
+  cbc-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

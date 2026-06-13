@@ -1109,3 +1109,184 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* VS Code Terminal Pane */
+.vs-terminal-pane {
+    height: 240px;
+    min-height: 150px;
+    max-height: 50vh;
+    background-color: var(--bg-darker);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #e1e1e1;
+    z-index: 10;
+}
+
+.terminal-header {
+    height: 35px;
+    background-color: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    user-select: none;
+}
+
+.terminal-tabs {
+    display: flex;
+    align-items: center;
+}
+
+.terminal-tab {
+    color: var(--text-light);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 4px;
+}
+
+.terminal-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.terminal-clear-btn, .terminal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.terminal-clear-btn:hover, .terminal-close-btn:hover {
+    color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.terminal-body {
+    flex-grow: 1;
+    padding: 12px 16px;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    line-height: 1.6;
+}
+
+.terminal-loading {
+    color: var(--yellow);
+    font-style: italic;
+}
+
+.terminal-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.terminal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.terminal-line {
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.terminal-line.error, .terminal-line.stderr {
+    color: #fca5a5; /* Red / light red */
+}
+
+.terminal-line.stdout {
+    color: #a7f3d0; /* Green / light green */
+}
+
+.terminal-meta {
+    margin-top: 12px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 8px;
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text-dark);
+}
+
+.meta-item.exit-code.success {
+    color: var(--green);
+}
+
+.meta-item.exit-code.fail {
+    color: var(--red);
+}
+
+/* Run Button CSS */
+.vs-run-btn {
+    background-color: #10b981; /* Premium Green */
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-family: var(--font-main);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    transition: all 0.15s ease;
+    margin-right: 12px;
+}
+
+.vs-run-btn:hover:not(:disabled) {
+    background-color: #059669;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+}
+
+.vs-run-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.vs-run-btn:disabled {
+    background-color: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.vs-terminal-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    transition: all 0.15s ease;
+}
+
+.vs-terminal-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+}
+
+.vs-terminal-toggle-btn.active {
+    background-color: var(--primary-glow);
+    border-color: var(--primary);
+    color: var(--text-light);
+}
+
