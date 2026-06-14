@@ -131,7 +131,7 @@ public class RoomService {
                         new RuntimeException("Room not found"));
 
         String code = room.getCurrentCode();
-        return code != null ? code : "// Welcome to the collaborative workspace!\n// Start coding here...";
+        return code != null ? code : "public class Main {\n    public static void main(String[] args) {\n  //Start Coding  \n    System.out.println(\"Hello, World!\");\n    }\n}";
     }
 
 

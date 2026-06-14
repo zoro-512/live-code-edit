@@ -16,9 +16,9 @@ const Workspace = () => {
     const [roomCode, setRoomCode] = useState(location.state?.roomCode || '');
 
     // Collaborative Code & User States
-    const [editorCode, setEditorCode] = useState('// Welcome to the collaborative workspace!\n// Start coding here...');
+    const [editorCode, setEditorCode] = useState('public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
     const [members, setMembers] = useState([]);
-    const [language, setLanguage] = useState('javascript');
+    const [language, setLanguage] = useState('java');
     const [connectionStatus, setConnectionStatus] = useState('DISCONNECTED');
     const [editorLine, setEditorLine] = useState(1);
     const [editorCol, setEditorCol] = useState(1);

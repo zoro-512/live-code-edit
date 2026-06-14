@@ -7,7 +7,7 @@ const Auth = () => {
     const navigate = useNavigate();
 
     const [isLogin, setIsLogin] = useState(true);
-    const [editorLanguage, setEditorLanguage] = useState('javascript');
+    const [editorLanguage, setEditorLanguage] = useState('java');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -86,7 +86,7 @@ const Auth = () => {
     };
 
     const getGutterLineCount = () => {
-        if (editorLanguage === 'java') return isLogin ? 20 : 23;
+        if (editorLanguage === 'java') return isLogin ? 20 : 22;
         if (editorLanguage === 'javascript') return isLogin ? 12 : 14;
         return isLogin ? 11 : 14;
     };
