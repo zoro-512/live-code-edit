@@ -152,6 +152,31 @@ const Workspace = () => {
                 isRemoteChange.current = true;
                 setEditorCode(msg.content);
             }
+        } else if (msg.messageType === 'EXECUTION_START') {
+            setIsRunning(true);
+            setShowTerminal(true);
+            setTerminalOutput(null);
+        } else if (msg.messageType === 'EXECUTION_RESULT') {
+            setIsRunning(false);
+            setShowTerminal(true);
+            try {
+                const result = JSON.parse(msg.content);
+                setTerminalOutput({
+                    stdout: result.stdout || '',
+                    stderr: result.stderr || '',
+                    exitCode: result.exitCode,
+                    executionTime: result.executionTime,
+                    error: null
+                });
+            } catch (e) {
+                setTerminalOutput({
+                    stdout: '',
+                    stderr: '',
+                    exitCode: null,
+                    executionTime: null,
+                    error: 'Error parsing execution result: ' + msg.content
+                });
+            }
         }
     };
 
@@ -210,29 +235,11 @@ const Workspace = () => {
         setTerminalOutput(null);
 
         try {
-            const response = await api.post('/execute/execute', {
+            await api.post('/execute/execute', {
                 sourceCode: editorCode,
                 language: language,
                 roomId: roomId
             });
-
-            if (response.data) {
-                setTerminalOutput({
-                    stdout: response.data.stdout || '',
-                    stderr: response.data.stderr || '',
-                    exitCode: response.data.exitCode,
-                    executionTime: response.data.executionTime,
-                    error: null
-                });
-            } else {
-                setTerminalOutput({
-                    stdout: '',
-                    stderr: '',
-                    exitCode: null,
-                    executionTime: null,
-                    error: 'Error: Received empty response from code runner.'
-                });
-            }
         } catch (err) {
             console.error('Code execution failed:', err);
             const errorMessage = err.response?.data?.message || err.message || 'Unknown network error occurred while running code.';
@@ -243,7 +250,6 @@ const Workspace = () => {
                 executionTime: null,
                 error: `Network Error: ${errorMessage}`
             });
-        } finally {
             setIsRunning(false);
         }
     };

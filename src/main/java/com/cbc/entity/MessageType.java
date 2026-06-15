@@ -3,5 +3,7 @@ package com.cbc.entity;
 public enum MessageType {
     CHAT,
     JOIN,
-    LEFT
+    LEFT,
+    EXECUTION_START,
+    EXECUTION_RESULT
 }

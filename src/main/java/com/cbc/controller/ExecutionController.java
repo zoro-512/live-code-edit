@@ -1,10 +1,10 @@
 package com.cbc.controller;
 
 import com.cbc.dto.Execution.ExecuteCodeRequest;
-import com.cbc.dto.Execution.ExecuteCodeResponse;
 import com.cbc.service.ExecutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/execute")
 public class ExecutionController {
     @Autowired
-    private ExecutionService judge0Service;
+    private ExecutionService ex;
 
     @PostMapping("/execute")
-    public ResponseEntity<ExecuteCodeResponse> execute(
-            @RequestBody ExecuteCodeRequest request
-    ) {
-        return ResponseEntity.ok(
-                judge0Service.execute(request)
-        );
+    public ResponseEntity<Void> execute(@RequestBody ExecuteCodeRequest request,Authentication authentication) {
+        ex.executeAsync(request, authentication.getName());
+        return ResponseEntity.accepted().build();
     }
 
 }
