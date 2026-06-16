@@ -4,6 +4,28 @@ import MonacoEditor from '@monaco-editor/react';
 import { useAuth, api, API_BASE_URL } from '../context/AuthContext';
 import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
+import * as Y from 'yjs';
+import { MonacoBinding } from 'y-monaco';
+
+
+const uint8ArrayToBase64 = (arr) => {
+    let binary = '';
+    const len = arr.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(arr[i]);
+    }
+    return window.btoa(binary);
+};
+
+const base64ToUint8Array = (base64) => {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+};
 
 const Workspace = () => {
     const { roomId } = useParams();
@@ -11,35 +33,75 @@ const Workspace = () => {
     const navigate = useNavigate();
     const { userEmail, token } = useAuth();
 
-    // Details passed from Dashboard or fetched
+    
     const [roomName, setRoomName] = useState(location.state?.roomName || 'Workspace');
     const [roomCode, setRoomCode] = useState(location.state?.roomCode || '');
 
-    // Collaborative Code & User States
-    const [editorCode, setEditorCode] = useState('public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
+    
     const [members, setMembers] = useState([]);
     const [language, setLanguage] = useState('java');
     const [connectionStatus, setConnectionStatus] = useState('DISCONNECTED');
     const [editorLine, setEditorLine] = useState(1);
     const [editorCol, setEditorCol] = useState(1);
 
-    // Copy Feedback
+    
     const [copied, setCopied] = useState(false);
 
-    // Execution States
+    
     const [isRunning, setIsRunning] = useState(false);
     const [showTerminal, setShowTerminal] = useState(false);
     const [terminalOutput, setTerminalOutput] = useState(null);
+    const [activeTab, setActiveTab] = useState('console'); 
+    const [previewContent, setPreviewContent] = useState('');
 
-    // Refs for WebSocket client and remote state locks
+    
     const stompClientRef = useRef(null);
-    const isRemoteChange = useRef(false);
+    
+    
+    const yDocRef = useRef(new Y.Doc());
+    const yTextRef = useRef(yDocRef.current.getText('monaco'));
+    const monacoBindingRef = useRef(null);
+    const hasSyncedRef = useRef(false);
+    const syncTimeoutRef = useRef(null);
+    const editorRef = useRef(null);
 
-    // Ref for the debounced auto-save timer
+    
     const saveTimeoutRef = useRef(null);
 
     useEffect(() => {
-        // Fetch room info if not passed in routing state (e.g., page refresh)
+        
+        const handleYjsUpdate = (update, origin) => {
+            if (origin !== 'websocket-update' && origin !== 'websocket-sync') {
+                const base64Update = uint8ArrayToBase64(update);
+                const updateMessage = {
+                    roomId: roomId,
+                    creator: userEmail,
+                    content: base64Update,
+                    messageType: 'YJS_UPDATE'
+                };
+                const client = stompClientRef.current;
+                if (client && client.connected) {
+                    client.send('/app/chat.send', {}, JSON.stringify(updateMessage));
+                }
+            }
+        };
+
+        yDocRef.current.on('update', handleYjsUpdate);
+
+        
+        const handleTextObserve = () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+            saveTimeoutRef.current = setTimeout(() => {
+                const plainText = yTextRef.current.toString();
+                api.post(`/room/${roomId}/save`, { code: plainText })
+                    .catch(err => console.error('Failed to auto-save code:', err));
+            }, 2000); 
+        };
+        yTextRef.current.observe(handleTextObserve);
+
+        
         if (!roomCode) {
             api.get('/room/myRooms')
                 .then(response => {
@@ -52,23 +114,18 @@ const Workspace = () => {
                 .catch(err => console.error('Failed to load room details:', err));
         }
 
-        // Fetch saved code for this room
-        api.get(`/room/${roomId}/code`)
-            .then(response => {
-                if (response.data) {
-                    setEditorCode(response.data);
-                }
-            })
-            .catch(err => console.error('Failed to load room code:', err));
-
-        // Establish WebSocket Connection
+        
         connectWebSocket();
 
-        // Cleanup on unmount
+        
         return () => {
+            yDocRef.current.off('update', handleYjsUpdate);
+            yTextRef.current.unobserve(handleTextObserve);
             disconnectWebSocket();
-            if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current);
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+            if (monacoBindingRef.current) {
+                monacoBindingRef.current.destroy();
             }
         };
     }, [roomId]);
@@ -76,12 +133,12 @@ const Workspace = () => {
     const connectWebSocket = () => {
         setConnectionStatus('CONNECTING');
         
-        // SockJS connection to backend `/ws`
+        
         const socket = new SockJS(`${API_BASE_URL}/ws`);
         const client = Stomp.over(socket);
         stompClientRef.current = client;
 
-        // Disable heavy STOMP debug logs in browser console
+        
         client.debug = (str) => {
             console.log('[STOMP Debug] ' + str);
         };
@@ -94,7 +151,7 @@ const Workspace = () => {
         client.connect(headers, (frame) => {
             setConnectionStatus('CONNECTED');
             
-            // Subscribe to room topic
+            
             const topic = `/topic/room/${roomId}`;
             client.subscribe(topic, (messageOutput) => {
                 try {
@@ -105,7 +162,7 @@ const Workspace = () => {
                 }
             });
 
-            // Send JOIN message to alert others
+            
             const joinMessage = {
                 roomId: roomId,
                 creator: userEmail,
@@ -113,6 +170,41 @@ const Workspace = () => {
                 messageType: 'JOIN'
             };
             client.send('/app/chat.send', {}, JSON.stringify(joinMessage));
+
+            
+            const syncRequest = {
+                roomId: roomId,
+                creator: userEmail,
+                content: '',
+                messageType: 'YJS_SYNC_REQUEST'
+            };
+            client.send('/app/chat.send', {}, JSON.stringify(syncRequest));
+
+            
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+            syncTimeoutRef.current = setTimeout(() => {
+                if (!hasSyncedRef.current) {
+                    console.log('No peer response. Initializing Yjs text state from DB...');
+                    api.get(`/room/${roomId}/code`)
+                        .then(response => {
+                            if (!hasSyncedRef.current) {
+                                if (response.data) {
+                                    yTextRef.current.insert(0, response.data);
+                                } else {
+                                    yTextRef.current.insert(0, 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
+                                }
+                                hasSyncedRef.current = true;
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Failed to fetch DB fallback state:', err);
+                            if (!hasSyncedRef.current) {
+                                yTextRef.current.insert(0, 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
+                                hasSyncedRef.current = true;
+                            }
+                        });
+                }
+            }, 1500);
 
         }, (error) => {
             setConnectionStatus('DISCONNECTED');
@@ -123,7 +215,7 @@ const Workspace = () => {
     const disconnectWebSocket = () => {
         const client = stompClientRef.current;
         if (client && client.connected) {
-            // Send LEFT message before disconnecting
+            
             const leftMessage = {
                 roomId: roomId,
                 creator: userEmail,
@@ -143,19 +235,42 @@ const Workspace = () => {
 
     const handleIncomingMessage = (msg) => {
         if (msg.messageType === 'JOIN') {
-            // Add user to active members list if not already present
+            
             setMembers(prev => {
                 if (prev.includes(msg.creator)) return prev;
                 return [...prev, msg.creator];
             });
         } else if (msg.messageType === 'LEFT') {
-            // Remove user from active members
+            
             setMembers(prev => prev.filter(email => email !== msg.creator));
-        } else if (msg.messageType === 'CHAT') {
-            // Update editor content ONLY if the change originated from a remote user
+        } else if (msg.messageType === 'YJS_SYNC_REQUEST') {
+            
+            if (msg.creator !== userEmail && hasSyncedRef.current) {
+                console.log('Received YJS_SYNC_REQUEST. Sending sync response...');
+                const stateUpdate = Y.encodeStateAsUpdate(yDocRef.current);
+                const base64State = uint8ArrayToBase64(stateUpdate);
+                const syncResponse = {
+                    roomId: roomId,
+                    creator: userEmail,
+                    content: base64State,
+                    messageType: 'YJS_SYNC_RESPONSE'
+                };
+                stompClientRef.current.send('/app/chat.send', {}, JSON.stringify(syncResponse));
+            }
+        } else if (msg.messageType === 'YJS_SYNC_RESPONSE') {
+            
+            if (!hasSyncedRef.current) {
+                console.log('Received YJS_SYNC_RESPONSE. Applying state update...');
+                if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+                const update = base64ToUint8Array(msg.content);
+                Y.applyUpdate(yDocRef.current, update, 'websocket-sync');
+                hasSyncedRef.current = true;
+            }
+        } else if (msg.messageType === 'YJS_UPDATE') {
+            
             if (msg.creator !== userEmail) {
-                isRemoteChange.current = true;
-                setEditorCode(msg.content);
+                const update = base64ToUint8Array(msg.content);
+                Y.applyUpdate(yDocRef.current, update, 'websocket-update');
             }
         } else if (msg.messageType === 'EXECUTION_START') {
             setIsRunning(true);
@@ -185,47 +300,26 @@ const Workspace = () => {
         }
     };
 
-    const handleEditorChange = (value) => {
-        if (isRemoteChange.current) {
-            // Programmatic update from remote user, reset lock and skip broadcast
-            isRemoteChange.current = false;
-            return;
-        }
-
-        // Send local changes to all room members
-        setEditorCode(value);
-        broadcastCodeChange(value);
-
-        // Debounce saving the code to the database via REST API
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-        }
-        
-        saveTimeoutRef.current = setTimeout(() => {
-            api.post(`/room/${roomId}/save`, { code: value })
-                .catch(err => console.error('Failed to auto-save code:', err));
-        }, 2000); // 2-second debounce interval
-    };
-
-    const broadcastCodeChange = (code) => {
-        const client = stompClientRef.current;
-        if (client && client.connected) {
-            const chatMessage = {
-                roomId: roomId,
-                creator: userEmail,
-                content: code,
-                messageType: 'CHAT'
-            };
-            client.send('/app/chat.send', {}, JSON.stringify(chatMessage));
-        }
-    };
-
-    // Tracking Cursor Position in Status Bar
+    
     const handleEditorDidMount = (editor, monaco) => {
+        editorRef.current = editor;
+        
         editor.onDidChangeCursorPosition((e) => {
             setEditorLine(e.position.lineNumber);
             setEditorCol(e.position.column);
         });
+
+        
+        if (yTextRef.current) {
+            if (monacoBindingRef.current) {
+                monacoBindingRef.current.destroy();
+            }
+            monacoBindingRef.current = new MonacoBinding(
+                yTextRef.current,
+                editor.getModel(),
+                new Set([editor])
+            );
+        }
     };
 
     const copyRoomCode = () => {
@@ -234,27 +328,147 @@ const Workspace = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const runJavaScriptLocal = (code) => {
+        const startTime = Date.now();
+        const logs = [];
+        const errors = [];
+
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.sandbox = 'allow-scripts';
+        document.body.appendChild(iframe);
+
+        
+        const iframeSrc = `
+            <!DOCTYPE html>
+            <html>
+            <body>
+            <script>
+                const customConsole = {
+                    log: (...args) => {
+                        const str = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                        window.parent.postMessage({ type: 'JS_CONSOLE_LOG', data: str }, '*');
+                    },
+                    error: (...args) => {
+                        const str = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                        window.parent.postMessage({ type: 'JS_CONSOLE_ERROR', data: str }, '*');
+                    }
+                };
+                window.console = { ...window.console, ...customConsole };
+                window.onerror = (message, source, lineno, colno, error) => {
+                    window.parent.postMessage({ type: 'JS_CONSOLE_ERROR', data: message + " (Line " + lineno + ")" }, '*');
+                    return true;
+                };
+                try {
+                    ${code}
+                } catch (e) {
+                    window.parent.postMessage({ type: 'JS_CONSOLE_ERROR', data: e.message }, '*');
+                }
+            </script>
+            </body>
+            </html>
+        `;
+
+        const handleIframeMessage = (event) => {
+            if (event.data?.type === 'JS_CONSOLE_LOG') {
+                logs.push(event.data.data);
+            } else if (event.data?.type === 'JS_CONSOLE_ERROR') {
+                errors.push(event.data.data);
+            }
+        };
+
+        window.addEventListener('message', handleIframeMessage);
+        iframe.srcdoc = iframeSrc;
+
+        
+        setTimeout(() => {
+            window.removeEventListener('message', handleIframeMessage);
+            document.body.removeChild(iframe);
+
+            setTerminalOutput({
+                stdout: logs.join('\n'),
+                stderr: errors.join('\n'),
+                exitCode: errors.length > 0 ? 1 : 0,
+                executionTime: Date.now() - startTime,
+                error: null
+            });
+            setIsRunning(false);
+        }, 800);
+    };
+
+    const runHtmlLocal = (code) => {
+        setPreviewContent(code);
+        setActiveTab('preview');
+        setTerminalOutput(null);
+        setTimeout(() => {
+            setIsRunning(false);
+        }, 300);
+    };
+
+    const runCssLocal = (code) => {
+        const fullHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    ${code}
+                </style>
+            </head>
+            <body style="background:#1e1e1e; color:#cccccc; font-family: sans-serif; padding: 20px;">
+                <h1 style="color:#ffffff; border-bottom:1px solid #333; padding-bottom:10px;">CSS Preview Sandbox</h1>
+                <p>This paragraph is styled by the CSS editor code above.</p>
+                <div class="box" style="margin:20px 0; padding:15px; border:1px dashed #666; display:inline-block;">
+                    Class: <code style="color:#f89820">.box</code>
+                </div>
+                <br />
+                <button class="btn" style="padding:6px 12px; cursor:pointer;">
+                    Class: <code style="color:#f89820">.btn</code>
+                </button>
+            </body>
+            </html>
+        `;
+        setPreviewContent(fullHtml);
+        setActiveTab('preview');
+        setTerminalOutput(null);
+        setTimeout(() => {
+            setIsRunning(false);
+        }, 300);
+    };
+
     const handleRunCode = async () => {
+        const currentCode = yTextRef.current.toString();
         setIsRunning(true);
         setShowTerminal(true);
         setTerminalOutput(null);
 
-        try {
-            await api.post('/execute/execute', {
-                sourceCode: editorCode,
-                language: language,
-                roomId: roomId
-            });
-        } catch (err) {
-            console.error('Code execution failed:', err);
-            const errorMessage = err.response?.data?.message || err.message || 'Unknown network error occurred while running code.';
-            setTerminalOutput({
-                stdout: '',
-                stderr: '',
-                exitCode: null,
-                executionTime: null,
-                error: `Network Error: ${errorMessage}`
-            });
+        if (language === 'javascript') {
+            runJavaScriptLocal(currentCode);
+        } else if (language === 'html') {
+            runHtmlLocal(currentCode);
+        } else if (language === 'css') {
+            runCssLocal(currentCode);
+        } else if (language === 'java') {
+            setActiveTab('console');
+            try {
+                await api.post('/execute/execute', {
+                    sourceCode: currentCode,
+                    language: language,
+                    roomId: roomId
+                });
+            } catch (err) {
+                console.error('Code execution failed:', err);
+                const errorMessage = err.response?.data?.message || err.message || 'Unknown network error occurred while running code.';
+                setTerminalOutput({
+                    stdout: '',
+                    stderr: '',
+                    exitCode: null,
+                    executionTime: null,
+                    error: `Network Error: ${errorMessage}`
+                });
+                setIsRunning(false);
+            }
+        } else {
             setIsRunning(false);
         }
     };
@@ -262,7 +476,7 @@ const Workspace = () => {
     return (
         <div className="vs-app-layout">
             
-            {/* VS Code Main Sidebar Icon Menu */}
+            {}
             <aside className="vs-activity-bar">
                 <div className="activity-top">
                     <div className="activity-icon" title="Go back to Dashboard" onClick={() => navigate('/dashboard')}>
@@ -290,13 +504,13 @@ const Workspace = () => {
                 </div>
             </aside>
 
-            {/* VS Code Workspace Sidebar Panel */}
+            {}
             <div className="vs-sidebar-panel">
                 <div className="sidebar-header">
                     <h3 className="workspace-title">{roomName}</h3>
                 </div>
 
-                {/* Section 1: Active Collaborators */}
+                {}
                 <div className="sidebar-section">
                     <div className="section-title">
                         <span className="arrow-icon">▼</span>
@@ -304,7 +518,7 @@ const Workspace = () => {
                     </div>
                     <div className="section-content">
                         <ul className="member-list">
-                            {/* Always render current user first */}
+                            {}
                             <li className="member-item me">
                                 <div className="member-avatar">ME</div>
                                 <div className="member-info">
@@ -312,7 +526,7 @@ const Workspace = () => {
                                     <span className="member-status">Owner (You)</span>
                                 </div>
                             </li>
-                            {/* Render remote members */}
+                            {}
                             {members.filter(m => m !== userEmail).map((email, idx) => (
                                 <li key={idx} className="member-item">
                                     <div className="member-avatar">{email.substring(0, 2).toUpperCase()}</div>
@@ -326,7 +540,7 @@ const Workspace = () => {
                     </div>
                 </div>
 
-                {/* Section 2: Room Info */}
+                {}
                 <div className="sidebar-section border-top">
                     <div className="section-title">
                         <span className="arrow-icon">▼</span>
@@ -347,16 +561,16 @@ const Workspace = () => {
                 </div>
             </div>
 
-            {/* Main VS Code Monaco Workspace */}
+            {}
             <main className="vs-main-workspace-view">
                 
-                {/* Editor Tabs bar */}
+                {}
                 <div className="tab-container-header">
                     <div className="active-tab">
                         <span>main.{language === 'javascript' ? 'js' : language === 'java' ? 'java' : language === 'html' ? 'html' : 'txt'}</span>
                     </div>
                     <div className="tab-actions">
-                        {/* Toggle Terminal Button */}
+                        {}
                         <button 
                             onClick={() => setShowTerminal(!showTerminal)} 
                             className={`vs-terminal-toggle-btn ${showTerminal ? 'active' : ''}`}
@@ -368,13 +582,13 @@ const Workspace = () => {
                             </svg>
                         </button>
 
-                        {/* Run Button (Only for Java language) */}
-                        {language === 'java' && (
+                        {}
+                        {(['java', 'javascript', 'html', 'css'].includes(language)) && (
                             <button 
                                 onClick={handleRunCode} 
                                 disabled={isRunning} 
                                 className="vs-run-btn"
-                                title="Run Java Program"
+                                title={`Run ${language.toUpperCase()} Program`}
                             >
                                 {isRunning ? (
                                     <div className="vs-loader-sm" />
@@ -396,19 +610,16 @@ const Workspace = () => {
                             <option value="java">Java</option>
                             <option value="html">HTML</option>
                             <option value="css">CSS</option>
-                            <option value="cpp">C++</option>
                         </select>
                     </div>
                 </div>
 
-                {/* Monaco Editor Container */}
+                {}
                 <div className="monaco-editor-pane">
                     <MonacoEditor
                         height="100%"
                         language={language}
                         theme="vs-dark"
-                        value={editorCode}
-                        onChange={handleEditorChange}
                         onMount={handleEditorDidMount}
                         options={{
                             selectOnLineNumbers: true,
@@ -422,15 +633,48 @@ const Workspace = () => {
                     />
                 </div>
 
-                {/* Bottom Terminal Pane */}
+                {}
                 {showTerminal && (
                     <div className="vs-terminal-pane">
                         <div className="terminal-header">
-                            <div className="terminal-tabs">
-                                <span className="terminal-tab">Terminal / Output</span>
+                            <div className="terminal-tabs" style={{ display: 'flex', gap: '8px' }}>
+                                <button 
+                                    className={`terminal-tab-btn ${activeTab === 'console' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('console')}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: activeTab === 'console' ? '#fff' : '#858585',
+                                        borderBottom: activeTab === 'console' ? '2px solid var(--primary)' : 'none',
+                                        cursor: 'pointer',
+                                        padding: '4px 8px',
+                                        fontSize: '12px',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Console Output
+                                </button>
+                                {['html', 'css'].includes(language) && (
+                                    <button 
+                                        className={`terminal-tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('preview')}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: activeTab === 'preview' ? '#fff' : '#858585',
+                                            borderBottom: activeTab === 'preview' ? '2px solid var(--primary)' : 'none',
+                                            cursor: 'pointer',
+                                            padding: '4px 8px',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                        }}
+                                    >
+                                        Web Preview
+                                    </button>
+                                )}
                             </div>
                             <div className="terminal-actions">
-                                <button className="terminal-clear-btn" onClick={() => setTerminalOutput(null)}>
+                                <button className="terminal-clear-btn" onClick={() => { setTerminalOutput(null); setPreviewContent(''); }}>
                                     Clear
                                 </button>
                                 <button className="terminal-close-btn" onClick={() => setShowTerminal(false)}>
@@ -438,41 +682,62 @@ const Workspace = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className="terminal-body">
-                            {isRunning && (
-                                <div className="terminal-loading">
-                                    <span className="vs-loader-sm" style={{ display: 'inline-block', marginRight: '8px', borderTopColor: 'var(--yellow)' }} />
-                                    Running code on secure Java runner...
+                        <div className="terminal-body" style={{ position: 'relative', height: 'calc(100% - 35px)', overflow: 'hidden' }}>
+                            {activeTab === 'console' && (
+                                <div style={{ height: '100%', overflowY: 'auto', padding: '10px' }}>
+                                    {isRunning && (
+                                        <div className="terminal-loading">
+                                            <span className="vs-loader-sm" style={{ display: 'inline-block', marginRight: '8px', borderTopColor: 'var(--yellow)' }} />
+                                            Executing {language.toUpperCase()}...
+                                        </div>
+                                    )}
+                                    {!isRunning && !terminalOutput && (
+                                        <div className="terminal-placeholder">
+                                            Click the 'Run' button above to run your {language.toUpperCase()} code.
+                                        </div>
+                                    )}
+                                    {terminalOutput && (
+                                        <div className="terminal-content">
+                                            {terminalOutput.error && (
+                                                <div className="terminal-line error">{terminalOutput.error}</div>
+                                            )}
+                                            {terminalOutput.stderr && (
+                                                <div className="terminal-line stderr" style={{ color: 'var(--red)', whiteSpace: 'pre-wrap' }}>{terminalOutput.stderr}</div>
+                                            )}
+                                            {terminalOutput.stdout && (
+                                                <div className="terminal-line stdout" style={{ color: 'var(--green)', whiteSpace: 'pre-wrap' }}>{terminalOutput.stdout}</div>
+                                            )}
+                                            <div className="terminal-meta">
+                                                {terminalOutput.exitCode !== null && (
+                                                    <span className={`meta-item exit-code ${terminalOutput.exitCode === 0 ? 'success' : 'fail'}`}>
+                                                        Process exited with code {terminalOutput.exitCode}
+                                                    </span>
+                                                )}
+                                                {terminalOutput.executionTime !== null && (
+                                                    <span className="meta-item time">
+                                                        Time: {terminalOutput.executionTime}ms
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            {!isRunning && !terminalOutput && (
-                                <div className="terminal-placeholder">
-                                    Click the 'Run' button above to compile and execute your Java code.
-                                </div>
-                            )}
-                            {terminalOutput && (
-                                <div className="terminal-content">
-                                    {terminalOutput.error && (
-                                        <div className="terminal-line error">{terminalOutput.error}</div>
+
+                            {activeTab === 'preview' && (
+                                <div className="web-preview-container" style={{ width: '100%', height: '100%', background: '#ffffff' }}>
+                                    {previewContent ? (
+                                        <iframe
+                                            title="Web Preview"
+                                            srcDoc={previewContent}
+                                            sandbox="allow-scripts"
+                                            style={{ width: '100%', height: '100%', border: 'none', background: '#ffffff' }}
+                                        />
+                                    ) : (
+                                        <div className="terminal-placeholder" style={{ color: '#858585', padding: '10px' }}>
+                                            No visual output generated yet. Run your HTML/CSS code.
+                                        </div>
                                     )}
-                                    {terminalOutput.stderr && (
-                                        <div className="terminal-line stderr">{terminalOutput.stderr}</div>
-                                    )}
-                                    {terminalOutput.stdout && (
-                                        <div className="terminal-line stdout">{terminalOutput.stdout}</div>
-                                    )}
-                                    <div className="terminal-meta">
-                                        {terminalOutput.exitCode !== null && (
-                                            <span className={`meta-item exit-code ${terminalOutput.exitCode === 0 ? 'success' : 'fail'}`}>
-                                                Process exited with code {terminalOutput.exitCode}
-                                            </span>
-                                        )}
-                                        {terminalOutput.executionTime !== null && (
-                                            <span className="meta-item time">
-                                                Time: {terminalOutput.executionTime}ms
-                                            </span>
-                                        )}
-                                    </div>
                                 </div>
                             )}
                         </div>
@@ -480,7 +745,7 @@ const Workspace = () => {
                 )}
             </main>
 
-            {/* Bottom Status Bar */}
+            {}
             <footer className="vs-status-bar">
                 <div className="status-left">
                     <span className={`status-item bg-primary ${connectionStatus.toLowerCase()}`}>

@@ -5,5 +5,8 @@ public enum MessageType {
     JOIN,
     LEFT,
     EXECUTION_START,
-    EXECUTION_RESULT
+    EXECUTION_RESULT,
+    YJS_UPDATE,
+    YJS_SYNC_REQUEST,
+    YJS_SYNC_RESPONSE
 }

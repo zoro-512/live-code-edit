@@ -39,11 +39,13 @@ cbc/
 
 ## 🚀 Key Features
 
-* **Real-time Live Sync**: Instantaneous code syncing using **SockJS** and **STOMP WebSockets** between all users in a workspace.
-* **Secure Sandbox Execution**: Executes code in isolated, resource-constrained (`128MB RAM / 1 CPU`) sibling Docker containers on the host, securing your server from loops or malicious system calls.
-* **Interactive Output Panel**: Embedded dark console output panel showing stdout in green, stderr in red, exit codes, and precise execution time in milliseconds.
+* **Real-time CRDT Collaboration**: Smooth, conflict-free document syncing powered by **Yjs** and **y-monaco**. Transmits optimized base64-encoded binary delta updates instead of string overwrites, preventing cursor jump-backs and resolving concurrency conflicts mathematically.
+* **Multi-Runtime Execution Sandboxes**:
+  *   **Backend Sandbox (Java)**: Compiles and runs Java code securely inside resource-constrained sibling Docker containers (`128MB RAM / 1 CPU`) using Docker-out-of-Docker (DooD) socket communication.
+  *   **Frontend Sandbox (JS, HTML, CSS)**: Natively runs JavaScript code inside an isolated `<iframe>` (secured via `sandbox="allow-scripts"`), intercepting console output via event messages. Compiles and renders HTML/CSS inside an interactive **Live Web Preview** tab.
+* **Interactive Console & Preview Panels**: Embedded dark console panel displaying stdout in green, stderr in red, exit codes, and execution times, alongside a live rendering web preview frame.
 * **Stateless Authentication**: Protected routes secured by stateless **Spring Security JWT**.
-* **Modern Developer UI**: Beautiful dashboard showing active user details, copyable security sharing codes, active members status indicators, and custom dialog inputs.
+* **Modern Developer UI**: Beautiful VS Code inspired dashboard showing active workspace members, security share codes, and status indicators.
 
 ---
 
