@@ -56,14 +56,14 @@ public class RoomController {
     }
 
     @GetMapping("/{roomId}/code")
-    public ResponseEntity<String> getRoomCode(@PathVariable Long roomId) {
+    public ResponseEntity<String> getRoomCode(@PathVariable Long roomId, Authentication authentication) {
         return ResponseEntity.ok(
-                roomService.getCode(roomId)
+                roomService.getCode(roomId, authentication.getName())
         );
     }
     @PostMapping("/{roomId}/save")
-    public ResponseEntity<String> saveRoomCode(@PathVariable Long roomId, @RequestBody SaveCodeRequest request) {
-        roomService.saveCode(roomId, request.getCode());
+    public ResponseEntity<String> saveRoomCode(@PathVariable Long roomId, @RequestBody SaveCodeRequest request, Authentication authentication) {
+        roomService.saveCode(roomId, request.getCode(), authentication.getName());
         return ResponseEntity.ok("Code saved successfully");
     }
 

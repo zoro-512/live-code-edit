@@ -5,6 +5,7 @@ import com.cbc.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,18 +18,20 @@ public class RoomCodeController {
     @PutMapping("/{roomId}/code")
     public ResponseEntity<Void> saveCode(
             @PathVariable Long roomId,
-            @RequestBody CodeUpdateReq req) {
+            @RequestBody CodeUpdateReq req,
+            Authentication authentication) {
 
-        roomService.saveCode(roomId, req.getCode());
+        roomService.saveCode(roomId, req.getCode(), authentication.getName());
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{roomId}/code")
     public ResponseEntity<CodeUpdateReq> getCode(
-            @PathVariable Long roomId) {
+            @PathVariable Long roomId,
+            Authentication authentication) {
 
-        String code = roomService.getCode(roomId);
+        String code = roomService.getCode(roomId, authentication.getName());
 
         CodeUpdateReq response = new CodeUpdateReq();
         response.setCode(code);

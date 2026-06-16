@@ -9,7 +9,7 @@ const Workspace = () => {
     const { roomId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
-    const { userEmail } = useAuth();
+    const { userEmail, token } = useAuth();
 
     // Details passed from Dashboard or fetched
     const [roomName, setRoomName] = useState(location.state?.roomName || 'Workspace');
@@ -86,7 +86,12 @@ const Workspace = () => {
             console.log('[STOMP Debug] ' + str);
         };
 
-        client.connect({}, (frame) => {
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        client.connect(headers, (frame) => {
             setConnectionStatus('CONNECTED');
             
             // Subscribe to room topic

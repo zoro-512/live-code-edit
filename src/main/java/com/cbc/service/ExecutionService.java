@@ -49,7 +49,6 @@ public class ExecutionService {
             }
 
             String responseJson = objectMapper.writeValueAsString(executionResponse);
-
             ChatMessage resultMessage = new ChatMessage();
             resultMessage.setRoomId(roomId);
             resultMessage.setCreator(executorEmail);

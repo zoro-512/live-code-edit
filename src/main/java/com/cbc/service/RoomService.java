@@ -112,8 +112,17 @@ public class RoomService {
 
     }
 
+    public void validateRoomMembership(String email, Long roomId) {
+        if (!userRepo.isUserMemberOfRoom(email, roomId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You are not authorized to access this room"
+            );
+        }
+    }
+
     @Transactional
-    public void saveCode(Long roomId, String code) {
+    public void saveCode(Long roomId, String code, String email) {
+        validateRoomMembership(email, roomId);
 
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() ->
@@ -124,7 +133,8 @@ public class RoomService {
         roomRepo.save(room);
     }
 
-    public String getCode(Long roomId) {
+    public String getCode(Long roomId, String email) {
+        validateRoomMembership(email, roomId);
 
         Room room = roomRepo.findById(roomId)
                 .orElseThrow(() ->
