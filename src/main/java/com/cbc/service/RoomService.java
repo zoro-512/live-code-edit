@@ -28,7 +28,7 @@ public class RoomService {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Room room=new Room();
-        room.setName(createRoomRequest.getRoomName());
+        room.setName(createRoomRequest.roomName());
         room.setCreatedAt(LocalDateTime.now());
         room.setCreatedBy(user);
         String roomCode;
@@ -47,19 +47,14 @@ public class RoomService {
         user.getRooms().add(room);
         userRepo.save(user);
 
-        RoomResponse roomResponse=new RoomResponse();
-        roomResponse.setRoomName(room.getName());
-        roomResponse.setRoomCode(roomCode);
-        roomResponse.setId(room.getId());
-        return roomResponse;
-
+        return new RoomResponse(room.getId(), room.getName(), roomCode);
     }
 
     @Transactional
     public RoomResponse joinRoom(String email,JoinRoomRequest joinRoomRequest) {
         User u = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Room room =roomRepo.findByRoomCode(joinRoomRequest.getRoomCode())
+        Room room =roomRepo.findByRoomCode(joinRoomRequest.roomCode())
                 .orElseThrow( () -> new RuntimeException("Room Not Found"));
 
         List<Room> nl=u.getRooms();
@@ -70,11 +65,7 @@ public class RoomService {
         u.setRooms(nl);
         userRepo.save(u);
 
-        RoomResponse roomResponse=new RoomResponse();
-        roomResponse.setRoomName(room.getName());
-        roomResponse.setRoomCode(joinRoomRequest.getRoomCode());
-        roomResponse.setId(room.getId());
-        return roomResponse;
+        return new RoomResponse(room.getId(), room.getName(), joinRoomRequest.roomCode());
     }
 
 
@@ -84,13 +75,7 @@ public class RoomService {
 
         return u.getRooms()
                 .stream()
-                .map(room -> {
-                    RoomResponse response = new RoomResponse();
-                    response.setId(room.getId());
-                    response.setRoomName(room.getName());
-                    response.setRoomCode(room.getRoomCode());
-                    return response;
-                })
+                .map(room -> new RoomResponse(room.getId(), room.getName(), room.getRoomCode()))
                 .toList();
     }
 

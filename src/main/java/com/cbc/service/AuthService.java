@@ -24,17 +24,17 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
 
 
-    public ResponseEntity<String> SaveNewUser(SignupReq u) {
-        if(userRepo.findByEmail(u.getEmail()).isPresent())
+    public ResponseEntity<String> saveNewUser(SignupReq u) {
+        if(userRepo.findByEmail(u.email()).isPresent())
             return new ResponseEntity<>( HttpStatus.BAD_REQUEST);
-        User a=new User();
-        a.setPassword(passwordEncoder.encode(u.getPassword()));
-        a.setName(u.getName());
-        a.setEmail(u.getEmail());
-        a.setCreatedAt(LocalDateTime.now());
-        a.setRole(Role.USER);
-        userRepo.save(a);
-        return new  ResponseEntity<>("User Registered Successfully",HttpStatusCode.valueOf(200));
+        User user = new User();
+        user.setPassword(passwordEncoder.encode(u.password()));
+        user.setName(u.name());
+        user.setEmail(u.email());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setRole(Role.USER);
+        userRepo.save(user);
+        return new  ResponseEntity<>("User Registered Successfully", HttpStatusCode.valueOf(200));
     }
 
 

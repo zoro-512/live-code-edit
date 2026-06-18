@@ -1,7 +1,7 @@
 package com.cbc.service;
 
 import com.cbc.dto.user.UserResponse;
-import com.cbc.dto.user.UserUpdateResponse;
+import com.cbc.dto.user.UserUpdateRequest;
 import com.cbc.entity.User;
 import com.cbc.exception.UserNotFoundException;
 import com.cbc.repository.UserRepo;
@@ -20,33 +20,23 @@ public class UserService {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        UserResponse response = new UserResponse();
-        response.setName(user.getName());
-        response.setEmail(user.getEmail());
-        response.setRole(user.getRole());
-        response.setId(user.getId());
-        return response;
+        return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
 
 
-    public UserResponse updateCurrentUser(String email, UserUpdateResponse userUpdateResponse) {
+    public UserResponse updateCurrentUser(String email, UserUpdateRequest userUpdateRequest) {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-        if(userUpdateResponse.getPassword() != null &&
-                !userUpdateResponse.getPassword().isBlank()) {
+        if(userUpdateRequest.password() != null &&
+                !userUpdateRequest.password().isBlank()) {
 
             user.setPassword(
-                    passwordEncoder.encode(userUpdateResponse.getPassword())
+                    passwordEncoder.encode(userUpdateRequest.password())
             );
         }
-        user.setName(userUpdateResponse.getName());
-            userRepo.save(user);
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setName(user.getName());
-        response.setEmail(user.getEmail());
-        response.setRole(user.getRole());
+        user.setName(userUpdateRequest.name());
+        userRepo.save(user);
 
-        return response;
+        return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
 }

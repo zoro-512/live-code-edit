@@ -38,17 +38,17 @@ public class AuthController {
     private  RefreshTokenService refreshTokenService;
 
 
-    @PostMapping("/SignUp")
+    @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody SignupReq u){
-        return authService.SaveNewUser(u);
+        return authService.saveNewUser(u);
 
     }
 
-    @PostMapping("Login")
-    public ResponseEntity<String> Login(@RequestBody LoginReq u){
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginReq u){
         try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(u.getEmail(), u.getPassword()));
-            UserDetails us = userDetailsService.loadUserByUsername(u.getEmail());
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(u.email(), u.password()));
+            UserDetails us = userDetailsService.loadUserByUsername(u.email());
             String jwts = jwtUtils.generateToken(us.getUsername());
             return new ResponseEntity<>(jwts, HttpStatus.OK);
         } catch (Exception e) {
@@ -58,7 +58,7 @@ public class AuthController {
 
     @PostMapping("/refreshtoken")
     public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
-        String requestRefreshToken = request.getRefreshToken();
+        String requestRefreshToken = request.refreshToken();
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)

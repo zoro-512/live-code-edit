@@ -63,7 +63,7 @@ public class RoomController {
     }
     @PostMapping("/{roomId}/save")
     public ResponseEntity<String> saveRoomCode(@PathVariable Long roomId, @RequestBody SaveCodeRequest request, Authentication authentication) {
-        roomService.saveCode(roomId, request.getCode(), authentication.getName());
+        roomService.saveCode(roomId, request.code(), authentication.getName());
         return ResponseEntity.ok("Code saved successfully");
     }
 

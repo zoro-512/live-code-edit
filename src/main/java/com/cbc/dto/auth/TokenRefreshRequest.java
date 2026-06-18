@@ -1,13 +1,8 @@
 package com.cbc.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
-public class TokenRefreshRequest {
-
+public record TokenRefreshRequest(
     @NotBlank(message = "Refresh token is required")
-    private String refreshToken;
-}
+    String refreshToken
+) {}

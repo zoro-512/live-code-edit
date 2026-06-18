@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+.dockerignore
+README.md
+eslint.config.js
+vite.config.js
+package-lock.json

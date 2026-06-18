@@ -1,15 +1,7 @@
 package com.cbc.dto.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-@AllArgsConstructor
-public class JwtResponse {
-
-    private String accessToken;
-    private String refreshToken;
-    private String email;
-}
+public record JwtResponse(
+    String accessToken,
+    String refreshToken,
+    String email
+) {}

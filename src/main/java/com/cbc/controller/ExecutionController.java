@@ -1,6 +1,6 @@
 package com.cbc.controller;
 
-import com.cbc.dto.Execution.ExecuteCodeRequest;
+import com.cbc.dto.execution.ExecuteCodeRequest;
 import com.cbc.service.ExecutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

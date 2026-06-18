@@ -25,10 +25,7 @@ public class WebSocketEventListener {
         String username = (String) stompHeaderAccessor.getSessionAttributes().get("username");
         String roomId = (String) stompHeaderAccessor.getSessionAttributes().get("roomId");
         if (username != null && roomId != null) {
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setMessageType(MessageType.LEFT);
-            chatMessage.setCreator(username);
-            chatMessage.setRoomId(roomId);
+            ChatMessage chatMessage = new ChatMessage(roomId, username, null, java.time.LocalDateTime.now(), MessageType.LEFT);
 
             simpMessagingTemplate.convertAndSend(
                     "/topic/room/" + roomId, chatMessage

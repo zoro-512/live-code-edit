@@ -1,3 +1,3 @@
-FROM openjdk:28-ea-trixie
+FROM openjdk:21-slim
 
 WORKDIR /app

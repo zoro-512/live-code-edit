@@ -44,8 +44,8 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            // Backend endpoint is `/auth/Login` (case sensitive)
-            const response = await axios.post(`${API_BASE_URL}/auth/Login`, {
+            // Backend endpoint is `/auth/login` (case sensitive)
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, {
                 email,
                 password
             }, {
@@ -69,8 +69,8 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password) => {
         try {
-            // Backend endpoint is `/auth/SignUp` (case sensitive)
-            await axios.post(`${API_BASE_URL}/auth/SignUp`, {
+            // Backend endpoint is `/auth/signup` (case sensitive)
+            await axios.post(`${API_BASE_URL}/auth/signup`, {
                 name,
                 email,
                 password,

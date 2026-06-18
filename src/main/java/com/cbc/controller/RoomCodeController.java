@@ -21,7 +21,7 @@ public class RoomCodeController {
             @RequestBody CodeUpdateReq req,
             Authentication authentication) {
 
-        roomService.saveCode(roomId, req.getCode(), authentication.getName());
+        roomService.saveCode(roomId, req.code(), authentication.getName());
 
         return ResponseEntity.ok().build();
     }
@@ -33,10 +33,7 @@ public class RoomCodeController {
 
         String code = roomService.getCode(roomId, authentication.getName());
 
-        CodeUpdateReq response = new CodeUpdateReq();
-        response.setCode(code);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new CodeUpdateReq(code));
     }
 
 

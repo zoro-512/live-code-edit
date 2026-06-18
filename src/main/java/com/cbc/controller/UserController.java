@@ -2,7 +2,7 @@ package com.cbc.controller;
 
 
 import com.cbc.dto.user.UserResponse;
-import com.cbc.dto.user.UserUpdateResponse;
+import com.cbc.dto.user.UserUpdateRequest;
 import com.cbc.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +25,9 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserResponse> updateMe(Authentication authentication, @RequestBody UserUpdateResponse userUpdateResponse){
+    public ResponseEntity<UserResponse> updateMe(Authentication authentication, @RequestBody UserUpdateRequest userUpdateRequest){
         return  ResponseEntity.ok(
-                userService.updateCurrentUser(authentication.getName(),userUpdateResponse)
+                userService.updateCurrentUser(authentication.getName(),userUpdateRequest)
         );
     }
 

@@ -1,6 +1,6 @@
 package com.cbc.service;
 
-import com.cbc.dto.Execution.ExecuteCodeResponse;
+import com.cbc.dto.execution.ExecuteCodeResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

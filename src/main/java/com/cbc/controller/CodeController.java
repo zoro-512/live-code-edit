@@ -17,12 +17,12 @@ public class CodeController {
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor){
-        headerAccessor.getSessionAttributes().put("username", chatMessage.getCreator());
-        headerAccessor.getSessionAttributes().put("roomId", chatMessage.getRoomId());
+        headerAccessor.getSessionAttributes().put("username", chatMessage.creator());
+        headerAccessor.getSessionAttributes().put("roomId", chatMessage.roomId());
 
 
         simpMessagingTemplate.convertAndSend(
-               "/topic/room/" + chatMessage.getRoomId(), chatMessage
+               "/topic/room/" + chatMessage.roomId(), chatMessage
         );
     }
 

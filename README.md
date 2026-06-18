@@ -5,7 +5,7 @@
 [![React](https://img.shields.io/badge/React-19-blue.svg?style=flat-square&logo=react)](https://react.dev/)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Orchestrated-blue.svg?style=flat-square&logo=docker)](https://www.docker.com/)
 
-A premium, VS Code-inspired real-time collaborative coding workspace. It enables multiple developers to code together with live sync over WebSockets and securely execute Java programs inside a sandboxed Docker container environment.
+An interactive, browser-native real-time collaborative development workspace. The platform integrates Conflict-Free Replicated Data Types (CRDTs) to facilitate concurrent code editing and provides isolated, multi-language compilation sandboxes spanning both client-side and server-side runtimes.
 
 ---
 
@@ -39,13 +39,13 @@ cbc/
 
 ## 🚀 Key Features
 
-* **Real-time CRDT Collaboration**: Smooth, conflict-free document syncing powered by **Yjs** and **y-monaco**. Transmits optimized base64-encoded binary delta updates instead of string overwrites, preventing cursor jump-backs and resolving concurrency conflicts mathematically.
-* **Multi-Runtime Execution Sandboxes**:
-  *   **Backend Sandbox (Java)**: Compiles and runs Java code securely inside resource-constrained sibling Docker containers (`128MB RAM / 1 CPU`) using Docker-out-of-Docker (DooD) socket communication.
-  *   **Frontend Sandbox (JS, HTML, CSS)**: Natively runs JavaScript code inside an isolated `<iframe>` (secured via `sandbox="allow-scripts"`), intercepting console output via event messages. Compiles and renders HTML/CSS inside an interactive **Live Web Preview** tab.
-* **Interactive Console & Preview Panels**: Embedded dark console panel displaying stdout in green, stderr in red, exit codes, and execution times, alongside a live rendering web preview frame.
-* **Stateless Authentication**: Protected routes secured by stateless **Spring Security JWT**.
-* **Modern Developer UI**: Beautiful VS Code inspired dashboard showing active workspace members, security share codes, and status indicators.
+* **Real-time CRDT Document Synchronization**: Employs **Yjs** and **y-monaco** for peer-to-peer real-time document synchronization. Transmits optimized Base64-encoded binary delta updates over STOMP WebSockets to resolve concurrent edit conflicts mathematically using state-vector vector clocks while preserving cursor and editor consistency.
+* **Isolated Multi-Runtime Compilation Sandboxes**:
+  *   **Server-Side Runtime (Java)**: Executes Java programs securely in isolated, resource-constrained container environments (`128MB RAM / 1 CPU`) using Docker-out-of-Docker (DooD) socket communication.
+  *   **Client-Side Runtime (JS, HTML, CSS)**: Compiles and runs browser-native execution profiles locally using sandboxed HTML `<iframe>` windows (isolated via `sandbox="allow-scripts"`). Intercepts console logging outputs using window event messaging and provides an interactive visual web preview panel.
+* **Unified Console Output & Live Previews**: Integrates a dark console panel capturing standard output stream, standard error, process exit codes, and millisecond execution times, complemented by a live web preview container.
+* **Stateless Security & RBAC**: API endpoints and WebSocket channels secured using stateless JWT authentication with Spring Security filtering.
+* **Workspace Management Dashboard**: Modern workspace panel providing real-time peer presence status, shared room creation, and dynamic join token authorization.
 
 ---
 
@@ -105,8 +105,8 @@ docker compose up --build -d
 ## 🔌 API Endpoints Reference
 
 ### 🔐 Authentication (`/auth`)
-* `POST /auth/SignUp` - Registers a new user. Accepts JSON: `{ "name", "email", "password" }`.
-* `POST /auth/Login` - Authenticates a user. Returns a raw JWT string on success.
+* `POST /auth/signup` - Registers a new user. Accepts JSON: `{ "name", "email", "password" }`.
+* `POST /auth/login` - Authenticates a user. Returns a raw JWT string on success.
 
 ### 🏠 Rooms (`/room`)
 * `POST /room/create` - Creates a new room. Accepts JSON: `{ "roomName" }`.
