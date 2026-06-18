@@ -9,6 +9,8 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 @RequiredArgsConstructor
 public class CodeController {
@@ -16,10 +18,11 @@ public class CodeController {
     private final RoomService roomService;
 
     @MessageMapping("/chat.send")
-    public void sendMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor){
+    public void sendMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor, Principal principal) {
+        roomService.validateRoomMembership(principal.getName(), Long.parseLong(chatMessage.roomId()));
+
         headerAccessor.getSessionAttributes().put("username", chatMessage.creator());
         headerAccessor.getSessionAttributes().put("roomId", chatMessage.roomId());
-
 
         simpMessagingTemplate.convertAndSend(
                "/topic/room/" + chatMessage.roomId(), chatMessage
@@ -27,4 +30,3 @@ public class CodeController {
     }
 
 }
-

@@ -3,7 +3,6 @@ package com.cbc.controller;
 import com.cbc.dto.code.CodeUpdateReq;
 import com.cbc.service.RoomService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
 public class RoomCodeController {
-    @Autowired
     private final RoomService roomService;
+
 
     @PutMapping("/{roomId}/code")
     public ResponseEntity<Void> saveCode(

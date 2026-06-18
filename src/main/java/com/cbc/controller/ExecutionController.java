@@ -2,6 +2,7 @@ package com.cbc.controller;
 
 import com.cbc.dto.execution.ExecuteCodeRequest;
 import com.cbc.service.ExecutionService;
+import com.cbc.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,13 +14,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/execute")
 public class ExecutionController {
+
     @Autowired
     private ExecutionService ex;
 
+    @Autowired
+    private RoomService roomService;
+
     @PostMapping("/execute")
-    public ResponseEntity<Void> execute(@RequestBody ExecuteCodeRequest request,Authentication authentication) {
+    public ResponseEntity<Void> execute(@RequestBody ExecuteCodeRequest request, Authentication authentication) {
+        roomService.validateRoomMembership(authentication.getName(), Long.parseLong(request.roomId()));
         ex.executeAsync(request, authentication.getName());
         return ResponseEntity.accepted().build();
     }
 
 }
+

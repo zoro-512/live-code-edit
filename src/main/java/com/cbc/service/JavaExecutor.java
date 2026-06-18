@@ -59,6 +59,7 @@ public class JavaExecutor implements CodeExecutor {
                             "--memory=128m",
                             "--cpus=1",
                             "--network=none",
+                            "--user", "nobody",
                             "-v",
                             hostPath + ":/app",
                             "java-runner",

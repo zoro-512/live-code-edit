@@ -45,14 +45,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginReq u){
+    public ResponseEntity<?> login(@RequestBody LoginReq u) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(u.email(), u.password()));
             UserDetails us = userDetailsService.loadUserByUsername(u.email());
-            String jwts = jwtUtils.generateToken(us.getUsername());
-            return new ResponseEntity<>(jwts, HttpStatus.OK);
+            String accessToken = jwtUtils.generateToken(us.getUsername());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(u.email());
+            return ResponseEntity.ok(new JwtResponse(accessToken, refreshToken.getToken(), us.getUsername()));
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
     }
 
