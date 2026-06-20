@@ -6,12 +6,14 @@ import com.cbc.dto.code.ChatMessage;
 import com.cbc.entity.MessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExecutionService {
@@ -19,13 +21,6 @@ public class ExecutionService {
     private final CodeExecutor javaExecutor;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ObjectMapper objectMapper;
-
-    public ExecuteCodeResponse execute(ExecuteCodeRequest request) {
-        if (request.language().contentEquals("java")) {
-            return javaExecutor.execute(request.sourceCode());
-        }
-        return new ExecuteCodeResponse("hello", "", 1, 1L);
-    }
 
     @Async("executionTaskExecutor")
     public void executeAsync(ExecuteCodeRequest request, String executorEmail) {
@@ -46,7 +41,12 @@ public class ExecutionService {
             if ("java".equalsIgnoreCase(request.language())) {
                 executionResponse = javaExecutor.execute(request.sourceCode());
             } else {
-                executionResponse = new ExecuteCodeResponse("hello", "", 1, 1L);
+                executionResponse = ExecuteCodeResponse.builder()
+                        .stdout("")
+                        .stderr("Language '" + request.language() + "' is not supported for server-side execution.")
+                        .exitCode(1)
+                        .executionTime(0L)
+                        .build();
             }
 
             String responseJson = objectMapper.writeValueAsString(executionResponse);
@@ -60,6 +60,7 @@ public class ExecutionService {
             simpMessagingTemplate.convertAndSend(destination, resultMessage);
 
         } catch (Exception e) {
+            log.error("Execution failed for room {} by {}: {}", roomId, executorEmail, e.getMessage(), e);
             try {
                 ExecuteCodeResponse errorResponse = ExecuteCodeResponse.builder()
                         .stdout("")
@@ -77,7 +78,8 @@ public class ExecutionService {
                         MessageType.EXECUTION_RESULT
                 );
                 simpMessagingTemplate.convertAndSend(destination, errorMessage);
-            } catch (Exception ignored) {
+            } catch (Exception innerException) {
+                log.error("Failed to send error message to room {}: {}", roomId, innerException.getMessage());
             }
         }
     }

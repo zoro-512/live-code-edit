@@ -7,7 +7,7 @@ import com.cbc.entity.Room;
 import com.cbc.entity.User;
 import com.cbc.repository.RoomRepo;
 import com.cbc.repository.UserRepo;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,18 +16,17 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class RoomService {
 
-    @Autowired
-    private RoomRepo roomRepo;
-    @Autowired
-    private UserRepo userRepo;
+    private final RoomRepo roomRepo;
+    private final UserRepo userRepo;
 
     @Transactional
-    public RoomResponse createNewRoom(String email,CreateRoomRequest createRoomRequest){
+    public RoomResponse createNewRoom(String email, CreateRoomRequest createRoomRequest) {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Room room=new Room();
+        Room room = new Room();
         room.setName(createRoomRequest.roomName());
         room.setCreatedAt(LocalDateTime.now());
         room.setCreatedBy(user);
@@ -40,7 +39,7 @@ public class RoomService {
                     .substring(0, 6)
                     .toUpperCase();
         }
-        while(roomRepo.existsByRoomCode(roomCode));
+        while (roomRepo.existsByRoomCode(roomCode));
         room.setRoomCode(roomCode);
         roomRepo.save(room);
 
@@ -51,29 +50,29 @@ public class RoomService {
     }
 
     @Transactional
-    public RoomResponse joinRoom(String email,JoinRoomRequest joinRoomRequest) {
-        User u = userRepo.findByEmail(email)
+    public RoomResponse joinRoom(String email, JoinRoomRequest joinRoomRequest) {
+        User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Room room =roomRepo.findByRoomCode(joinRoomRequest.roomCode())
-                .orElseThrow( () -> new RuntimeException("Room Not Found"));
+        Room room = roomRepo.findByRoomCode(joinRoomRequest.roomCode())
+                .orElseThrow(() -> new RuntimeException("Room Not Found"));
 
-        List<Room> nl=u.getRooms();
-        if (!nl.contains(room)) {
-            nl.add(room);
+        List<Room> userRooms = user.getRooms();
+        if (!userRooms.contains(room)) {
+            userRooms.add(room);
         }
 
-        u.setRooms(nl);
-        userRepo.save(u);
+        user.setRooms(userRooms);
+        userRepo.save(user);
 
         return new RoomResponse(room.getId(), room.getName(), joinRoomRequest.roomCode());
     }
 
 
     public List<RoomResponse> getMyRooms(String email) {
-        User u = userRepo.findByEmail(email)
+        User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return u.getRooms()
+        return user.getRooms()
                 .stream()
                 .map(room -> new RoomResponse(room.getId(), room.getName(), room.getRoomCode()))
                 .toList();
@@ -128,6 +127,9 @@ public class RoomService {
         String code = room.getCurrentCode();
         return code != null ? code : "public class Main {\n    public static void main(String[] args) {\n  //Start Coding  \n    System.out.println(\"Hello, World!\");\n    }\n}";
     }
+
+
+}
 
 
 }

@@ -1,6 +1,7 @@
 package com.cbc.service;
 
 import com.cbc.dto.execution.ExecuteCodeResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 public class JavaExecutor implements CodeExecutor {
 
@@ -135,7 +137,7 @@ public class JavaExecutor implements CodeExecutor {
                 }
             }
         } catch (IOException e) {
-
+            log.warn("Failed to delete temp execution directory {}: {}", path, e.getMessage());
         }
     }
 }

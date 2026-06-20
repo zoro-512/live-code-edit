@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-export const API_BASE_URL = 'http://localhost:8080';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // Setup a global Axios instance for API requests
 export const api = axios.create({
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            // Backend endpoint is `/auth/login` (case sensitive)
+            // Backend returns JwtResponse { accessToken, refreshToken, email }
             const response = await axios.post(`${API_BASE_URL}/auth/login`, {
                 email,
                 password
@@ -52,15 +52,15 @@ export const AuthProvider = ({ children }) => {
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            // The backend returns the raw token string
-            const jwtToken = response.data;
-            if (jwtToken) {
-                localStorage.setItem('jwt_token', jwtToken);
-                localStorage.setItem('user_email', email);
-                setToken(jwtToken);
-                setUserEmail(email);
+            const { accessToken, email: userEmailFromServer } = response.data;
+            if (accessToken) {
+                localStorage.setItem('jwt_token', accessToken);
+                localStorage.setItem('user_email', userEmailFromServer || email);
+                setToken(accessToken);
+                setUserEmail(userEmailFromServer || email);
                 return { success: true };
             }
+            return { success: false, message: 'Login failed: no token received.' };
         } catch (error) {
             const errorMsg = error.response?.data || 'Login failed. Please check your credentials.';
             return { success: false, message: errorMsg };

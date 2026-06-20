@@ -31,7 +31,7 @@ const Workspace = () => {
     const { roomId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
-    const { userEmail, token } = useAuth();
+    const { userEmail, token, logout } = useAuth();
 
     
     const [roomName, setRoomName] = useState(location.state?.roomName || 'Workspace');
@@ -333,13 +333,12 @@ const Workspace = () => {
         const logs = [];
         const errors = [];
 
-        
+        // Create a sandboxed iframe
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.sandbox = 'allow-scripts';
         document.body.appendChild(iframe);
 
-        
         const iframeSrc = `
             <!DOCTYPE html>
             <html>
@@ -365,27 +364,19 @@ const Workspace = () => {
                 } catch (e) {
                     window.parent.postMessage({ type: 'JS_CONSOLE_ERROR', data: e.message }, '*');
                 }
-            </script>
+                // Signal that synchronous execution is done
+                window.parent.postMessage({ type: 'JS_DONE' }, '*');
+            <\/script>
             </body>
             </html>
         `;
 
-        const handleIframeMessage = (event) => {
-            if (event.data?.type === 'JS_CONSOLE_LOG') {
-                logs.push(event.data.data);
-            } else if (event.data?.type === 'JS_CONSOLE_ERROR') {
-                errors.push(event.data.data);
-            }
-        };
-
-        window.addEventListener('message', handleIframeMessage);
-        iframe.srcdoc = iframeSrc;
-
-        
-        setTimeout(() => {
+        let finished = false;
+        const cleanup = () => {
+            if (finished) return;
+            finished = true;
             window.removeEventListener('message', handleIframeMessage);
-            document.body.removeChild(iframe);
-
+            if (document.body.contains(iframe)) document.body.removeChild(iframe);
             setTerminalOutput({
                 stdout: logs.join('\n'),
                 stderr: errors.join('\n'),
@@ -394,7 +385,24 @@ const Workspace = () => {
                 error: null
             });
             setIsRunning(false);
-        }, 800);
+        };
+
+        const handleIframeMessage = (event) => {
+            if (event.data?.type === 'JS_CONSOLE_LOG') {
+                logs.push(event.data.data);
+            } else if (event.data?.type === 'JS_CONSOLE_ERROR') {
+                errors.push(event.data.data);
+            } else if (event.data?.type === 'JS_DONE') {
+                // Give a short grace period for any queued microtasks/macrotasks
+                setTimeout(cleanup, 100);
+            }
+        };
+
+        window.addEventListener('message', handleIframeMessage);
+        iframe.srcdoc = iframeSrc;
+
+        // Hard fallback: if JS_DONE is never received (e.g. infinite loop), cut off after 5s
+        setTimeout(cleanup, 5000);
     };
 
     const runHtmlLocal = (code) => {
@@ -451,7 +459,7 @@ const Workspace = () => {
         } else if (language === 'java') {
             setActiveTab('console');
             try {
-                await api.post('/execute/execute', {
+                await api.post('/execute/run', {
                     sourceCode: currentCode,
                     language: language,
                     roomId: roomId
@@ -494,7 +502,7 @@ const Workspace = () => {
                     </div>
                 </div>
                 <div className="activity-bottom">
-                    <div className="activity-icon" title="Log Out" onClick={() => navigate('/dashboard')}>
+                    <div className="activity-icon" title="Log Out" onClick={() => { logout(); navigate('/'); }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"/>
                             <path d="M16 17L21 12L16 7"/>

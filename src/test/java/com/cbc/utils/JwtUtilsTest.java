@@ -14,12 +14,12 @@ class JwtUtilsTest {
     void setUp() throws Exception {
         jwtUtils = new JwtUtils();
         
-        // Inject SECRET_KEY using reflection
+
         Field secretKeyField = JwtUtils.class.getDeclaredField("SECRET_KEY");
         secretKeyField.setAccessible(true);
         secretKeyField.set(jwtUtils, "myVeryLongSecretKeyForJwtAuthenticationProject2026");
 
-        // Inject expiration using reflection
+
         Field expirationField = JwtUtils.class.getDeclaredField("expiration");
         expirationField.setAccessible(true);
         expirationField.set(jwtUtils, 86400000L); // 1 day

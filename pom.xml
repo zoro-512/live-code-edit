@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.cbc</groupId>
-	<artifactId>demo</artifactId>
+	<artifactId>cbc</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Collaborative Code Editor (CBC)</name>
 	<description>An interactive, browser-native real-time collaborative development workspace featuring CRDT-based editor synchronization and isolated sandboxed execution runtimes.</description>

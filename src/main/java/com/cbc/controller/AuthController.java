@@ -6,17 +6,17 @@ import com.cbc.dto.auth.SignupReq;
 import com.cbc.dto.auth.TokenRefreshRequest;
 import com.cbc.entity.RefreshToken;
 import com.cbc.exception.TokenRefreshException;
-import com.cbc.service.AuthDetailServiceImplementation;
 import com.cbc.service.AuthService;
 import com.cbc.service.RefreshTokenService;
 import com.cbc.utils.JwtUtils;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,24 +24,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private AuthService authService;
-    @Autowired
-    private JwtUtils jwtUtils;
-    @Autowired
-    private AuthDetailServiceImplementation userDetailsService;
-    @Autowired
-    private  RefreshTokenService refreshTokenService;
-
+    private final AuthenticationManager authenticationManager;
+    private final AuthService authService;
+    private final JwtUtils jwtUtils;
+    private final UserDetailsService userDetailsService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody SignupReq u){
+    public ResponseEntity<String> signup(@Valid @RequestBody SignupReq u) {
         return authService.saveNewUser(u);
-
     }
 
     @PostMapping("/login")
@@ -70,3 +64,4 @@ public class AuthController {
                 .orElseThrow(() -> new TokenRefreshException("Refresh token is not in database!"));
     }
 }
+
