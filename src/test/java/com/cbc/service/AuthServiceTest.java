@@ -37,7 +37,11 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        validSignupReq = new SignupReq(0L, "Test User", "test@domain.com", "SecurePass123", null, Role.USER);
+        validSignupReq = new SignupReq();
+        validSignupReq.setName("Test User");
+        validSignupReq.setEmail("test@domain.com");
+        validSignupReq.setPassword("SecurePass123");
+        validSignupReq.setRole(Role.USER);
     }
 
     @Test

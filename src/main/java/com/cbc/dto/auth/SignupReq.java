@@ -7,16 +7,20 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
-public record SignupReq(
-    long id,
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Data
+@NoArgsConstructor
+public class SignupReq {
     @NotBlank
-    String name,
+    private String name;
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
-    String email,
+    private String email;
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters long")
-    String password,
-    LocalDateTime createdAt,
-    Role role
-) {}
+    private String password;
+    private Role role;
+}

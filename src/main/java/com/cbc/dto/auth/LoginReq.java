@@ -1,6 +1,12 @@
 package com.cbc.dto.auth;
 
-public record LoginReq(
-    String email,
-    String password
-) {}
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Data
+@NoArgsConstructor
+public class LoginReq {
+    private String email;
+    private String password;
+}

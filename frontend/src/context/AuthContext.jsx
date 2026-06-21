@@ -62,7 +62,14 @@ export const AuthProvider = ({ children }) => {
             }
             return { success: false, message: 'Login failed: no token received.' };
         } catch (error) {
-            const errorMsg = error.response?.data || 'Login failed. Please check your credentials.';
+            let errorMsg = 'Login failed. Please check your credentials.';
+            if (error.response?.data) {
+                if (typeof error.response.data === 'string') {
+                    errorMsg = error.response.data;
+                } else {
+                    errorMsg = error.response.data.message || error.response.data.error || 'Login failed.';
+                }
+            }
             return { success: false, message: errorMsg };
         }
     };
@@ -80,7 +87,19 @@ export const AuthProvider = ({ children }) => {
             });
             return { success: true };
         } catch (error) {
-            const errorMsg = error.response?.data || 'Registration failed.';
+            let errorMsg = 'Registration failed.';
+            if (error.response?.data) {
+                if (typeof error.response.data === 'string') {
+                    errorMsg = error.response.data;
+                } else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                } else if (error.response.data.error) {
+                    errorMsg = error.response.data.error;
+                } else if (typeof error.response.data === 'object') {
+                    // Handle Spring Boot Map<String, String> validation errors
+                    errorMsg = Object.values(error.response.data).join(' ');
+                }
+            }
             return { success: false, message: errorMsg };
         }
     };

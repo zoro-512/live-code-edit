@@ -3,7 +3,7 @@ import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
-import { api, API_BASE_URL } from '../../context/AuthContext';
+import { api, API_BASE_URL } from '../context/AuthContext';
 
 const uint8ArrayToBase64 = (arr) => {
     let binary = '';

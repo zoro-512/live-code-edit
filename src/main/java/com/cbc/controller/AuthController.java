@@ -41,10 +41,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginReq u) {
         try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(u.email(), u.password()));
-            UserDetails us = userDetailsService.loadUserByUsername(u.email());
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(u.getEmail(), u.getPassword()));
+            UserDetails us = userDetailsService.loadUserByUsername(u.getEmail());
             String accessToken = jwtUtils.generateToken(us.getUsername());
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(u.email());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(u.getEmail());
             return ResponseEntity.ok(new JwtResponse(accessToken, refreshToken.getToken(), us.getUsername()));
         } catch (Exception e) {
             return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);

@@ -21,12 +21,12 @@ public class AuthService {
 
 
     public ResponseEntity<String> saveNewUser(SignupReq u) {
-        if (userRepo.findByEmail(u.email()).isPresent())
+        if (userRepo.findByEmail(u.getEmail()).isPresent())
             return new ResponseEntity<>("Email already registered", HttpStatus.BAD_REQUEST);
         User user = new User();
-        user.setPassword(passwordEncoder.encode(u.password()));
-        user.setName(u.name());
-        user.setEmail(u.email());
+        user.setPassword(passwordEncoder.encode(u.getPassword()));
+        user.setName(u.getName());
+        user.setEmail(u.getEmail());
         user.setCreatedAt(LocalDateTime.now());
         user.setRole(Role.USER);
         userRepo.save(user);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../context/AuthContext';
+import { api } from '../context/AuthContext';
 
 export const useCodeExecution = (roomId) => {
     const [isRunning, setIsRunning] = useState(false);
@@ -164,7 +164,7 @@ export const useCodeExecution = (roomId) => {
                     stderr: '',
                     exitCode: null,
                     executionTime: null,
-                    error: \`Network Error: \${errorMessage}\`
+                    error: `Network Error: ${errorMessage}`
                 });
                 setIsRunning(false);
             }
