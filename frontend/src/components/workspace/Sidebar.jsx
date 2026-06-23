@@ -9,9 +9,7 @@ const FILE_TREE = [
   {
     name: 'src / main', open: true,
     children: [
-      { name: 'Main.java',    dot: '#6366f1' },
-      { name: 'Utils.java',   dot: null },
-      { name: 'Service.java', dot: '#10b981' },
+      { name: 'Main.java', dot: '#6366f1' },
     ],
   },
 ];

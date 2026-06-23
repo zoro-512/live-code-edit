@@ -85,8 +85,8 @@ export const useCodeExecution = (roomId) => {
             window.removeEventListener('message', handleIframeMessage);
             if (document.body.contains(iframe)) document.body.removeChild(iframe);
             setTerminalOutput({
-                stdout: logs.join('\\n'),
-                stderr: errors.join('\\n'),
+                stdout: logs.join('\n'),
+                stderr: errors.join('\n'),
                 exitCode: errors.length > 0 ? 1 : 0,
                 executionTime: Date.now() - startTime,
                 error: null

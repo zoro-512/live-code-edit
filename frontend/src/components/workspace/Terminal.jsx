@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-const TABS = [
+const BASE_TABS = [
   { id: 'console',  label: 'Console' },
   { id: 'problems', label: 'Problems' },
   { id: 'activity', label: 'Activity' },
@@ -18,6 +18,11 @@ const fmt = (ts) => new Date(ts).toLocaleTimeString('en-US', { hour12: false, ho
 
 const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab, previewContent, clearTerminal, setShowTerminal, activityLog = [] }) => {
   const bodyRef = useRef(null);
+  // Dynamically add Preview tab when previewContent is set
+  const TABS = previewContent
+    ? [...BASE_TABS, { id: 'preview', label: 'Preview' }]
+    : BASE_TABS;
+
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [terminalOutput, activityLog, activeTab]);
@@ -147,6 +152,16 @@ const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab
           <span style={{ color: '#858585', fontStyle: 'italic' }}>
             <span style={{ color: '#10b981' }}>$</span> Interactive terminal not available in collaborative mode.
           </span>
+        )}
+
+        {/* PREVIEW — HTML/CSS output */}
+        {activeTab === 'preview' && previewContent && (
+          <iframe
+            srcDoc={previewContent}
+            sandbox="allow-scripts"
+            style={{ width: '100%', height: '100%', border: 'none', borderRadius: 6, background: '#fff' }}
+            title="HTML/CSS Preview"
+          />
         )}
       </div>
     </div>

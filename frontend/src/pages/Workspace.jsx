@@ -1,6 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import MonacoEditor from '@monaco-editor/react';
+import MonacoEditor, { useMonaco } from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
 import { useCollaboration } from '../hooks/useCollaboration';
 import { useCodeExecution } from '../hooks/useCodeExecution';
@@ -17,15 +17,105 @@ const getShort  = (email) => (email?.split('@')[0] || 'U').substring(0, 2).toUpp
 const getDisplay = (email) => email?.split('@')[0] || email;
 
 const FILE_TABS = [
-  { name: 'main.java',   ext: 'java', modified: true  },
-  { name: 'Utils.java',  ext: 'java', modified: false },
-  { name: 'pom.xml',     ext: 'xml',  modified: false },
+  { name: 'Main.java', ext: 'java', modified: true },
 ];
 
 const EXT_COLOR = { java:'#f89820', js:'#f7df1e', jsx:'#61dafb', xml:'#ef4444', ts:'#3178c6', css:'#38bdf8', html:'#e44d26', py:'#3572a5' };
 
-const MONACO_THEME_MAP = {
-  'vs-dark': 'vs-dark', dracula: 'vs-dark', monokai: 'vs-dark', 'github-dark': 'vs-dark', nord: 'vs-dark',
+// Custom Monaco theme definitions
+const CUSTOM_THEMES = {
+  dracula: {
+    base: 'vs-dark', inherit: true,
+    rules: [
+      { token: 'comment',        foreground: '6272a4', fontStyle: 'italic' },
+      { token: 'keyword',        foreground: 'ff79c6' },
+      { token: 'string',         foreground: 'f1fa8c' },
+      { token: 'number',         foreground: 'bd93f9' },
+      { token: 'type',           foreground: '8be9fd', fontStyle: 'italic' },
+      { token: 'function',       foreground: '50fa7b' },
+      { token: 'variable',       foreground: 'f8f8f2' },
+      { token: 'delimiter',      foreground: 'ff79c6' },
+    ],
+    colors: {
+      'editor.background':           '#282a36',
+      'editor.foreground':           '#f8f8f2',
+      'editorLineNumber.foreground': '#6272a4',
+      'editorCursor.foreground':     '#f8f8f0',
+      'editor.selectionBackground':  '#44475a',
+      'editor.lineHighlightBackground': '#44475a55',
+      'editorGutter.background':     '#282a36',
+      'scrollbarSlider.background':  '#44475a99',
+    },
+  },
+  monokai: {
+    base: 'vs-dark', inherit: true,
+    rules: [
+      { token: 'comment',        foreground: '75715e', fontStyle: 'italic' },
+      { token: 'keyword',        foreground: 'f92672' },
+      { token: 'string',         foreground: 'e6db74' },
+      { token: 'number',         foreground: 'ae81ff' },
+      { token: 'type',           foreground: '66d9e8', fontStyle: 'italic' },
+      { token: 'function',       foreground: 'a6e22e' },
+      { token: 'variable',       foreground: 'f8f8f2' },
+      { token: 'delimiter',      foreground: 'f92672' },
+    ],
+    colors: {
+      'editor.background':           '#272822',
+      'editor.foreground':           '#f8f8f2',
+      'editorLineNumber.foreground': '#75715e',
+      'editorCursor.foreground':     '#f8f8f0',
+      'editor.selectionBackground':  '#49483e',
+      'editor.lineHighlightBackground': '#3e3d3255',
+      'editorGutter.background':     '#272822',
+      'scrollbarSlider.background':  '#49483e99',
+    },
+  },
+  'github-dark': {
+    base: 'vs-dark', inherit: true,
+    rules: [
+      { token: 'comment',        foreground: '8b949e', fontStyle: 'italic' },
+      { token: 'keyword',        foreground: 'ff7b72' },
+      { token: 'string',         foreground: 'a5d6ff' },
+      { token: 'number',         foreground: '79c0ff' },
+      { token: 'type',           foreground: 'ffa657' },
+      { token: 'function',       foreground: 'd2a8ff' },
+      { token: 'variable',       foreground: 'c9d1d9' },
+      { token: 'delimiter',      foreground: 'c9d1d9' },
+    ],
+    colors: {
+      'editor.background':           '#0d1117',
+      'editor.foreground':           '#c9d1d9',
+      'editorLineNumber.foreground': '#6e7681',
+      'editorCursor.foreground':     '#c9d1d9',
+      'editor.selectionBackground':  '#388bfd33',
+      'editor.lineHighlightBackground': '#161b2255',
+      'editorGutter.background':     '#0d1117',
+      'scrollbarSlider.background':  '#6e768199',
+    },
+  },
+  nord: {
+    base: 'vs-dark', inherit: true,
+    rules: [
+      { token: 'comment',        foreground: '616e88', fontStyle: 'italic' },
+      { token: 'keyword',        foreground: '81a1c1' },
+      { token: 'string',         foreground: 'a3be8c' },
+      { token: 'number',         foreground: 'b48ead' },
+      { token: 'type',           foreground: '8fbcbb' },
+      { token: 'function',       foreground: '88c0d0' },
+      { token: 'variable',       foreground: 'd8dee9' },
+      { token: 'delimiter',      foreground: 'eceff4' },
+    ],
+    colors: {
+      'editor.background':           '#2e3440',
+      'editor.foreground':           '#d8dee9',
+      'editorLineNumber.foreground': '#4c566a',
+      'editorCursor.foreground':     '#d8dee9',
+      'editor.selectionBackground':  '#434c5e',
+      'editor.lineHighlightBackground': '#3b424e55',
+      'editorGutter.background':     '#2e3440',
+      'scrollbarSlider.background':  '#434c5e99',
+    },
+  },
 };
 
 const Workspace = () => {
@@ -79,6 +169,23 @@ const Workspace = () => {
   );
 
   const editorRef = useRef(null);
+  const monaco = useMonaco();
+
+  // Register all custom themes once Monaco is ready
+  useEffect(() => {
+    if (!monaco) return;
+    Object.entries(CUSTOM_THEMES).forEach(([id, def]) => {
+      monaco.editor.defineTheme(id, def);
+    });
+    // Apply current theme immediately after registration
+    monaco.editor.setTheme(currentTheme);
+  }, [monaco]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reactively apply theme whenever user switches it
+  useEffect(() => {
+    if (!monaco) return;
+    monaco.editor.setTheme(currentTheme);
+  }, [monaco, currentTheme]);
 
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor;
@@ -111,7 +218,6 @@ const Workspace = () => {
 
   const applyTheme = (themeId) => {
     setCurrentTheme(themeId);
-    document.documentElement.setAttribute('data-theme', themeId === 'vs-dark' ? '' : themeId);
   };
 
   const langExt = { javascript:'js', java:'java', html:'html', css:'css', python:'py' };
@@ -284,7 +390,6 @@ const Workspace = () => {
           <MonacoEditor
             height="100%"
             language={language}
-            theme={MONACO_THEME_MAP[currentTheme] || 'vs-dark'}
             onMount={handleEditorDidMount}
             options={{
               selectOnLineNumbers: true,
