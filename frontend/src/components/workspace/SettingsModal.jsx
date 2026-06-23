@@ -21,8 +21,8 @@ const SettingsModal = ({
   showMinimap, setShowMinimap, wordWrap, setWordWrap,
   smoothScroll, setSmoothScroll, editorRef,
 }) => {
-  const [activeTab,   setActiveTab]   = useState('appearance');
-  const [fontFamily,  setFontFamily]  = useState("'Fira Code', monospace");
+  const [activeTab, setActiveTab] = useState('appearance');
+  const [fontFamily, setFontFamily] = useState("'Fira Code', monospace");
 
   const applyFontFamily = (family) => {
     setFontFamily(family);
@@ -31,211 +31,156 @@ const SettingsModal = ({
     }
   };
 
-  // ─── inline style tokens ──────────────────────────────────────
-  const S = {
-    overlay: {
-      position: 'fixed', inset: 0, zIndex: 9999,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
-    },
-    card: {
-      width: 580, maxHeight: '82vh', borderRadius: 14,
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      background: '#18181b', border: '1px solid #27272a',
-      boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
-    },
-    header: {
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 20px', borderBottom: '1px solid #27272a',
-      background: '#1c1c1f', flexShrink: 0,
-    },
-    body: { display: 'flex', flex: 1, overflow: 'hidden' },
-    nav: {
-      width: 148, flexShrink: 0, borderRight: '1px solid #27272a',
-      background: '#1c1c1f', padding: 8, display: 'flex', flexDirection: 'column', gap: 4,
-    },
-    navBtn: (active) => ({
-      width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 8,
-      background: active ? '#6366f1' : 'transparent',
-      color: active ? '#fff' : '#858585', border: 'none', cursor: 'pointer',
-      fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8,
-      transition: 'all .15s',
-    }),
-    content: { flex: 1, overflowY: 'auto', padding: 20 },
-    section: { marginBottom: 24 },
-    sectionTitle: {
-      fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-      letterSpacing: 2, color: '#858585', marginBottom: 12,
-    },
-    footer: {
-      display: 'flex', justifyContent: 'flex-end', gap: 10,
-      padding: '12px 20px', borderTop: '1px solid #27272a',
-      background: '#1c1c1f', flexShrink: 0,
-    },
-    toggle: (on) => ({
-      position: 'relative', width: 40, height: 20, borderRadius: 20,
-      background: on ? '#6366f1' : '#3d3d3d', cursor: 'pointer',
-      flexShrink: 0, transition: 'background .2s', border: 'none',
-    }),
-    toggleThumb: (on) => ({
-      position: 'absolute', top: 2, width: 16, height: 16, borderRadius: '50%',
-      background: '#fff', transition: 'transform .2s',
-      transform: on ? 'translateX(22px)' : 'translateX(2px)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-    }),
-  };
-
   return (
-    <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={S.card}>
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-[580px] max-h-[82vh] bg-[#18181b] border border-[#27272a] rounded-xl flex flex-col overflow-hidden shadow-2xl">
+        
         {/* Header */}
-        <div style={S.header}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#27272a] bg-[#1c1c1f] shrink-0">
+          <div className="flex items-center gap-2">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
               <circle cx="12" cy="12" r="3"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
               <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
             </svg>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#e1e1e1' }}>Settings</span>
+            <span className="text-sm font-semibold text-[#e1e1e1]">Settings</span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#858585', lineHeight: 1 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-            onMouseLeave={e => e.currentTarget.style.color = '#858585'}>×</button>
+          <button 
+            onClick={onClose} 
+            className="text-[#858585] hover:text-white transition-colors text-xl leading-none"
+          >
+            &times;
+          </button>
         </div>
 
         {/* Body */}
-        <div style={S.body}>
+        <div className="flex flex-1 overflow-hidden">
           {/* Left nav */}
-          <div style={S.nav}>
+          <div className="w-[148px] shrink-0 border-r border-[#27272a] bg-[#1c1c1f] p-2 flex flex-col gap-1">
             {[
               { id: 'appearance', label: 'Appearance', icon: '🎨' },
               { id: 'editor',     label: 'Editor',     icon: '✏️' },
               { id: 'keybinds',   label: 'Keybindings', icon: '⌨️' },
             ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={S.navBtn(activeTab === tab.id)}
-                onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.color = '#e1e1e1'; }}
-                onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.color = '#858585'; }}>
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id)} 
+                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-all ${
+                  activeTab === tab.id ? 'bg-[#6366f1] text-white' : 'bg-transparent text-[#858585] hover:text-[#e1e1e1]'
+                }`}
+              >
                 <span>{tab.icon}</span>{tab.label}
               </button>
             ))}
           </div>
 
           {/* Content */}
-          <div style={S.content}>
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
 
             {/* ── APPEARANCE ── */}
             {activeTab === 'appearance' && (
               <div>
-                <div style={S.section}>
-                  <p style={S.sectionTitle}>Color Theme</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {THEMES.map(t => (
-                      <button
-                        key={t.id}
-                        onClick={() => setTheme(t.id)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                          background: currentTheme === t.id ? 'rgba(99,102,241,0.1)' : 'transparent',
-                          border: `1px solid ${currentTheme === t.id ? '#6366f1' : '#27272a'}`,
-                          textAlign: 'left', transition: 'all .15s',
-                        }}
-                        onMouseEnter={e => { if (currentTheme !== t.id) e.currentTarget.style.borderColor = '#3f3f46'; }}
-                        onMouseLeave={e => { if (currentTheme !== t.id) e.currentTarget.style.borderColor = '#27272a'; }}
-                      >
-                        {/* Swatches */}
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          {t.preview.map((c, i) => (
-                            <div key={i} style={{ width: 18, height: 18, borderRadius: 4, background: c }} />
-                          ))}
-                        </div>
-                        <span style={{ fontSize: 13, color: '#e1e1e1', flex: 1 }}>{t.label}</span>
-                        {currentTheme === t.id && (
-                          <span style={{ fontSize: 11, color: '#6366f1', fontWeight: 600 }}>✓ Active</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#858585] mb-3">Color Theme</p>
+                <div className="flex flex-col gap-1.5">
+                  {THEMES.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTheme(t.id)}
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg border transition-all text-left ${
+                        currentTheme === t.id 
+                          ? 'border-[#6366f1] bg-indigo-500/10' 
+                          : 'border-[#27272a] bg-transparent hover:border-[#3f3f46]'
+                      }`}
+                    >
+                      <div className="flex gap-1">
+                        {t.preview.map((c, i) => (
+                          <div key={i} className="w-[18px] h-[18px] rounded-sm" style={{ background: c }} />
+                        ))}
+                      </div>
+                      <span className="text-[13px] text-[#e1e1e1] flex-1">{t.label}</span>
+                      {currentTheme === t.id && (
+                        <span className="text-[11px] text-[#6366f1] font-semibold">✓ Active</span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* ── EDITOR ── */}
             {activeTab === 'editor' && (
-              <div>
+              <div className="space-y-6">
                 {/* Font Size */}
-                <div style={S.section}>
-                  <p style={S.sectionTitle}>Font Size</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#858585] mb-3">Font Size</p>
+                  <div className="flex items-center gap-3 mb-3">
                     <input type="range" min="11" max="20" value={fontSize}
                       onChange={e => setFontSize(Number(e.target.value))}
-                      style={{ flex: 1, accentColor: '#6366f1' }} />
-                    <span style={{ color: '#e1e1e1', fontSize: 13, fontFamily: 'monospace', width: 44, textAlign: 'center' }}>
+                      className="flex-1 accent-[#6366f1]" />
+                    <span className="text-[#e1e1e1] text-[13px] font-mono w-11 text-center">
                       {fontSize}px
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div className="flex gap-1.5 flex-wrap">
                     {FONT_SIZES.map(s => (
-                      <button key={s} onClick={() => setFontSize(s)} style={{
-                        padding: '4px 10px', borderRadius: 6, fontSize: 12, fontFamily: 'monospace', cursor: 'pointer',
-                        background: fontSize === s ? '#6366f1' : 'transparent',
-                        color: fontSize === s ? '#fff' : '#858585',
-                        border: `1px solid ${fontSize === s ? 'transparent' : '#27272a'}`,
-                        transition: 'all .15s',
-                      }}>{s}</button>
+                      <button key={s} onClick={() => setFontSize(s)} className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all border ${
+                        fontSize === s 
+                          ? 'bg-[#6366f1] text-white border-transparent' 
+                          : 'bg-transparent text-[#858585] border-[#27272a]'
+                      }`}>{s}</button>
                     ))}
                   </div>
                 </div>
 
                 {/* Font Family */}
-                <div style={S.section}>
-                  <p style={S.sectionTitle}>Font Family</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#858585] mb-3">Font Family</p>
+                  <div className="flex flex-col gap-1.5">
                     {FONT_FAMILIES.map(f => (
-                      <button key={f.value} onClick={() => applyFontFamily(f.value)} style={{
-                        padding: '9px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-                        fontFamily: f.value, fontSize: 12,
-                        background: fontFamily === f.value ? 'rgba(99,102,241,0.1)' : 'transparent',
-                        color: fontFamily === f.value ? '#a5b4fc' : '#858585',
-                        border: `1px solid ${fontFamily === f.value ? '#6366f1' : '#27272a'}`,
-                        transition: 'all .15s',
-                      }}>{f.label}</button>
+                      <button key={f.value} onClick={() => applyFontFamily(f.value)} className={`px-3.5 py-2 rounded-lg text-left text-xs transition-all border ${
+                        fontFamily === f.value 
+                          ? 'bg-indigo-500/10 text-indigo-300 border-[#6366f1]' 
+                          : 'bg-transparent text-[#858585] border-[#27272a]'
+                      }`} style={{ fontFamily: f.value }}>{f.label}</button>
                     ))}
                   </div>
                 </div>
 
                 {/* Toggles */}
-                <div style={S.section}>
-                  <p style={S.sectionTitle}>Other</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#858585] mb-3">Other</p>
+                  <div className="flex flex-col gap-1">
                     {/* Minimap */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8 }}>
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
                       <div>
-                        <p style={{ fontSize: 13, color: '#e1e1e1', margin: 0 }}>Show Minimap</p>
-                        <p style={{ fontSize: 10, color: '#858585', marginTop: 2 }}>Code overview on the right side</p>
+                        <p className="text-[13px] text-[#e1e1e1]">Show Minimap</p>
+                        <p className="text-[10px] text-[#858585] mt-0.5">Code overview on the right side</p>
                       </div>
-                      <button style={S.toggle(showMinimap)} onClick={() => setShowMinimap(v => !v)}>
-                        <div style={S.toggleThumb(showMinimap)} />
+                      <button className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${showMinimap ? 'bg-[#6366f1]' : 'bg-[#3d3d3d]'}`} onClick={() => setShowMinimap(v => !v)}>
+                        <div className={`absolute top-[2px] w-4 h-4 rounded-full bg-white transition-transform shadow ${showMinimap ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
                       </button>
                     </div>
                     {/* Word Wrap */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8 }}>
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
                       <div>
-                        <p style={{ fontSize: 13, color: '#e1e1e1', margin: 0 }}>Word Wrap</p>
-                        <p style={{ fontSize: 10, color: '#858585', marginTop: 2 }}>Wrap long lines to fit the editor</p>
+                        <p className="text-[13px] text-[#e1e1e1]">Word Wrap</p>
+                        <p className="text-[10px] text-[#858585] mt-0.5">Wrap long lines to fit the editor</p>
                       </div>
-                      <button style={S.toggle(wordWrap === 'on')} onClick={() => setWordWrap(v => v === 'on' ? 'off' : 'on')}>
-                        <div style={S.toggleThumb(wordWrap === 'on')} />
+                      <button className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${wordWrap === 'on' ? 'bg-[#6366f1]' : 'bg-[#3d3d3d]'}`} onClick={() => setWordWrap(v => v === 'on' ? 'off' : 'on')}>
+                        <div className={`absolute top-[2px] w-4 h-4 rounded-full bg-white transition-transform shadow ${wordWrap === 'on' ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
                       </button>
                     </div>
                     {/* Smooth Scroll */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8 }}>
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-lg">
                       <div>
-                        <p style={{ fontSize: 13, color: '#e1e1e1', margin: 0 }}>Smooth Scrolling</p>
-                        <p style={{ fontSize: 10, color: '#858585', marginTop: 2 }}>Animate editor scroll movements</p>
+                        <p className="text-[13px] text-[#e1e1e1]">Smooth Scrolling</p>
+                        <p className="text-[10px] text-[#858585] mt-0.5">Animate editor scroll movements</p>
                       </div>
-                      <button style={S.toggle(smoothScroll)} onClick={() => setSmoothScroll(v => !v)}>
-                        <div style={S.toggleThumb(smoothScroll)} />
+                      <button className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${smoothScroll ? 'bg-[#6366f1]' : 'bg-[#3d3d3d]'}`} onClick={() => setSmoothScroll(v => !v)}>
+                        <div className={`absolute top-[2px] w-4 h-4 rounded-full bg-white transition-transform shadow ${smoothScroll ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
                       </button>
                     </div>
                   </div>
@@ -246,8 +191,8 @@ const SettingsModal = ({
             {/* ── KEYBINDINGS ── */}
             {activeTab === 'keybinds' && (
               <div>
-                <p style={S.sectionTitle}>Keyboard Shortcuts</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#858585] mb-3">Keyboard Shortcuts</p>
+                <div className="flex flex-col gap-0.5">
                   {[
                     ['Run Code',     'Ctrl + Enter'],
                     ['Toggle Panel', 'Ctrl + `'],
@@ -257,18 +202,9 @@ const SettingsModal = ({
                     ['Save',         'Ctrl + S'],
                     ['Split View',   'Ctrl + \\'],
                   ].map(([action, key]) => (
-                    <div key={action} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '8px 12px', borderRadius: 8,
-                    }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <span style={{ fontSize: 13, color: '#ccc' }}>{action}</span>
-                      <kbd style={{
-                        padding: '3px 8px', borderRadius: 5, fontSize: 11,
-                        fontFamily: 'monospace', color: '#858585',
-                        background: '#0c0d10', border: '1px solid #27272a',
-                      }}>{key}</kbd>
+                    <div key={action} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+                      <span className="text-[13px] text-[#ccc]">{action}</span>
+                      <kbd className="px-2 py-0.5 rounded text-[11px] font-mono text-[#858585] bg-[#0c0d10] border border-[#27272a]">{key}</kbd>
                     </div>
                   ))}
                 </div>
@@ -279,17 +215,13 @@ const SettingsModal = ({
         </div>
 
         {/* Footer */}
-        <div style={S.footer}>
-          <button onClick={onClose} style={{
-            padding: '7px 16px', borderRadius: 8, fontSize: 13,
-            background: 'transparent', color: '#858585',
-            border: '1px solid #27272a', cursor: 'pointer',
-          }}>Cancel</button>
-          <button onClick={onClose} style={{
-            padding: '7px 18px', borderRadius: 8, fontSize: 13,
-            fontWeight: 600, background: '#6366f1', color: '#fff',
-            border: 'none', cursor: 'pointer',
-          }}>Save Changes</button>
+        <div className="flex justify-end gap-2.5 px-5 py-3 border-t border-[#27272a] bg-[#1c1c1f] shrink-0">
+          <button onClick={onClose} className="px-4 py-1.5 rounded-lg text-[13px] text-[#858585] bg-transparent border border-[#27272a] hover:text-white transition-colors">
+            Cancel
+          </button>
+          <button onClick={onClose} className="px-4.5 py-1.5 rounded-lg text-[13px] font-semibold text-white bg-[#6366f1] border-none hover:bg-indigo-600 transition-colors">
+            Save Changes
+          </button>
         </div>
       </div>
     </div>

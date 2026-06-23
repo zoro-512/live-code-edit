@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
 import * as Y from 'yjs';
+import * as awarenessProtocol from 'y-protocols/awareness';
 import { MonacoBinding } from 'y-monaco';
 import { api, API_BASE_URL } from '../context/AuthContext';
+
+const AVATAR_COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
+const hashStr = (s) => String(s).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+const getColor = (email) => AVATAR_COLORS[Math.abs(hashStr(email || '')) % AVATAR_COLORS.length];
 
 const uint8ArrayToBase64 = (arr) => {
     let binary = '';
@@ -32,6 +37,7 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
     const yDocRef = useRef(new Y.Doc());
     const yTextRef = useRef(yDocRef.current.getText('monaco'));
     const monacoBindingRef = useRef(null);
+    const awarenessRef = useRef(new awarenessProtocol.Awareness(yDocRef.current));
     const hasSyncedRef = useRef(false);
     const syncTimeoutRef = useRef(null);
     const saveTimeoutRef = useRef(null);
@@ -55,6 +61,28 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
 
         yDocRef.current.on('update', handleYjsUpdate);
 
+        const handleAwarenessUpdate = ({ added, updated, removed }, origin) => {
+            if (origin !== 'websocket') {
+                const changedClients = added.concat(updated, removed);
+                const update = awarenessProtocol.encodeAwarenessUpdate(awarenessRef.current, changedClients);
+                const base64Update = uint8ArrayToBase64(update);
+                const updateMessage = {
+                    roomId, creator: userEmail, content: base64Update, messageType: 'YJS_AWARENESS'
+                };
+                const client = stompClientRef.current;
+                if (client && client.connected) {
+                    client.send('/app/chat.send', {}, JSON.stringify(updateMessage));
+                }
+            }
+        };
+        awarenessRef.current.on('update', handleAwarenessUpdate);
+
+        // Set local awareness state
+        awarenessRef.current.setLocalStateField('user', {
+            name: userEmail?.split('@')[0] || 'User',
+            color: getColor(userEmail)
+        });
+
         const handleTextObserve = () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
             saveTimeoutRef.current = setTimeout(() => {
@@ -69,11 +97,13 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
 
         return () => {
             yDocRef.current.off('update', handleYjsUpdate);
+            awarenessRef.current.off('update', handleAwarenessUpdate);
             yTextRef.current.unobserve(handleTextObserve);
             disconnectWebSocket();
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
             if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
             if (monacoBindingRef.current) monacoBindingRef.current.destroy();
+            awarenessRef.current.destroy();
         };
     }, [roomId]);
 
@@ -156,9 +186,15 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             setMembers(prev => prev.filter(email => email !== msg.creator));
         } else if (msg.messageType === 'YJS_SYNC_REQUEST') {
             if (msg.creator !== userEmail && hasSyncedRef.current) {
+                // Send current document state
                 const stateUpdate = Y.encodeStateAsUpdate(yDocRef.current);
                 const syncResponse = { roomId, creator: userEmail, content: uint8ArrayToBase64(stateUpdate), messageType: 'YJS_SYNC_RESPONSE' };
                 stompClientRef.current.send('/app/chat.send', {}, JSON.stringify(syncResponse));
+                
+                // Also send our awareness state to the requester
+                const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(awarenessRef.current, [awarenessRef.current.clientID]);
+                const awarenessMsg = { roomId, creator: userEmail, content: uint8ArrayToBase64(awarenessUpdate), messageType: 'YJS_AWARENESS' };
+                stompClientRef.current.send('/app/chat.send', {}, JSON.stringify(awarenessMsg));
             }
         } else if (msg.messageType === 'YJS_SYNC_RESPONSE') {
             if (!hasSyncedRef.current) {
@@ -169,6 +205,10 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         } else if (msg.messageType === 'YJS_UPDATE') {
             if (msg.creator !== userEmail) {
                 Y.applyUpdate(yDocRef.current, base64ToUint8Array(msg.content), 'websocket-update');
+            }
+        } else if (msg.messageType === 'YJS_AWARENESS') {
+            if (msg.creator !== userEmail) {
+                awarenessProtocol.applyAwarenessUpdate(awarenessRef.current, base64ToUint8Array(msg.content), 'websocket');
             }
         } else if (msg.messageType === 'EXECUTION_START' || msg.messageType === 'EXECUTION_RESULT') {
             onExecutionMessage(msg);
@@ -182,7 +222,8 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         monacoBindingRef.current = new MonacoBinding(
             yTextRef.current,
             editor.getModel(),
-            new Set([editor])
+            new Set([editor]),
+            awarenessRef.current
         );
     };
 
