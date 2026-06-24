@@ -28,33 +28,18 @@ const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab
   }, [terminalOutput, activityLog, activeTab]);
 
   return (
-    <div style={{
-      borderTop: '1px solid #2d2d2d',
-      display: 'flex', flexDirection: 'column',
-      height: 240, minHeight: 150, maxHeight: '50vh',
-      background: '#0c0d10', flexShrink: 0,
-    }}>
+    <div className="border-t border-zinc-800 flex flex-col h-[240px] min-h-[150px] max-h-[50vh] bg-zinc-950 shrink-0">
       {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        height: 36, background: '#1e1e1e', borderBottom: '1px solid #2d2d2d',
-        flexShrink: 0, paddingRight: 8,
-      }}>
+      <div className="flex items-center justify-between h-9 bg-zinc-900 border-b border-zinc-800 shrink-0 pr-2">
         {/* Tabs */}
-        <div style={{ display: 'flex', height: '100%' }}>
+        <div className="flex h-full">
           {TABS.map(tab => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '0 16px', height: '100%', background: 'transparent', border: 'none',
-                  cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                  color: isActive ? '#e1e1e1' : '#858585',
-                  borderBottom: isActive ? '2px solid #6366f1' : '2px solid transparent',
-                  transition: 'all .15s',
-                }}
+                className={`px-4 h-full bg-transparent border-none cursor-pointer text-xs font-medium border-b-2 transition-all ${isActive ? 'text-zinc-100 border-indigo-500' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
               >
                 {tab.label}
               </button>
@@ -62,48 +47,47 @@ const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab
           })}
         </div>
         {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="flex items-center gap-2">
           {activeTab === 'console' && (
-            <button onClick={clearTerminal} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#858585', padding: '2px 8px', borderRadius: 4 }}
-              onMouseEnter={e => e.currentTarget.style.color = '#e1e1e1'} onMouseLeave={e => e.currentTarget.style.color = '#858585'}>
+            <button onClick={clearTerminal} className="bg-transparent border-none cursor-pointer text-[11px] text-zinc-500 hover:text-zinc-300 px-2 py-0.5 rounded">
               Clear
             </button>
           )}
-          <button onClick={() => setShowTerminal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#858585', lineHeight: 1, padding: '0 4px' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#e1e1e1'} onMouseLeave={e => e.currentTarget.style.color = '#858585'}>
+          <button onClick={() => setShowTerminal(false)} className="bg-transparent border-none cursor-pointer text-lg text-zinc-500 hover:text-zinc-300 leading-none px-1">
             ×
           </button>
         </div>
       </div>
 
       {/* Body */}
-      <div ref={bodyRef} style={{ flex: 1, overflowY: 'auto', padding: 12, fontFamily: "'Fira Code',Consolas,monospace", fontSize: 12.5 }}>
+      {/* Body */}
+      <div ref={bodyRef} className="flex-1 overflow-y-auto p-3 font-mono text-[12.5px] leading-relaxed">
 
         {/* CONSOLE */}
         {activeTab === 'console' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="flex flex-col gap-1">
             {isRunning && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f59e0b' }}>
-                <div className="vs-loader-sm" style={{ borderTopColor: '#f59e0b' }} />
+              <div className="flex items-center gap-2 text-amber-500">
+                <div className="vs-loader-sm border-t-amber-500" />
                 Executing {language?.toUpperCase()}…
               </div>
             )}
             {!isRunning && !terminalOutput && (
-              <span style={{ color: '#858585', fontStyle: 'italic' }}>Press Run to execute your {language?.toUpperCase()} code.</span>
+              <span className="text-zinc-500 italic">Press Run to execute your {language?.toUpperCase()} code.</span>
             )}
             {terminalOutput?.error && (
-              <div style={{ color: '#fca5a5', whiteSpace: 'pre-wrap' }}>✖ {terminalOutput.error}</div>
+              <div className="text-red-300 whitespace-pre-wrap">✖ {terminalOutput.error}</div>
             )}
             {terminalOutput?.stderr && (
-              <div style={{ color: '#ef4444', whiteSpace: 'pre-wrap' }}>{terminalOutput.stderr}</div>
+              <div className="text-red-500 whitespace-pre-wrap">{terminalOutput.stderr}</div>
             )}
             {terminalOutput?.stdout && (
-              <div style={{ color: '#a7f3d0', whiteSpace: 'pre-wrap' }}>{terminalOutput.stdout}</div>
+              <div className="text-emerald-300 whitespace-pre-wrap">{terminalOutput.stdout}</div>
             )}
             {terminalOutput && (
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px solid #2d2d2d', fontSize: 11, color: '#858585' }}>
+              <div className="flex gap-4 mt-2 pt-2 border-t border-zinc-800 text-[11px] text-zinc-500">
                 {terminalOutput.exitCode !== null && (
-                  <span style={{ color: terminalOutput.exitCode === 0 ? '#10b981' : '#ef4444' }}>
+                  <span className={terminalOutput.exitCode === 0 ? 'text-emerald-500' : 'text-red-500'}>
                     {terminalOutput.exitCode === 0 ? '✓' : '✖'} Exit code {terminalOutput.exitCode}
                   </span>
                 )}
@@ -115,30 +99,30 @@ const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab
 
         {/* PROBLEMS */}
         {activeTab === 'problems' && (
-          <span style={{ color: '#858585', fontStyle: 'italic' }}>No problems detected.</span>
+          <span className="text-zinc-500 italic">No problems detected.</span>
         )}
 
         {/* ACTIVITY */}
         {activeTab === 'activity' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="flex flex-col gap-1.5">
             {activityLog.length === 0 && (
-              <span style={{ color: '#858585', fontStyle: 'italic' }}>Collaboration activity will appear here…</span>
+              <span className="text-zinc-500 italic">Collaboration activity will appear here…</span>
             )}
             {activityLog.map((ev, idx) => {
               const cfg = ACTIVITY_ICONS[ev.type] || ACTIVITY_ICONS.cursor;
               return (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12 }}>
-                  <span style={{ color: '#555', flexShrink: 0, width: 56 }}>{fmt(ev.timestamp)}</span>
-                  <span style={{ color: cfg.color, flexShrink: 0, width: 14, textAlign: 'center' }}>{cfg.icon}</span>
-                  <span style={{ color: '#ccc' }}>
-                    <span style={{ color: '#22d3ee', fontWeight: 600 }}>{ev.user}</span>
+                <div key={idx} className="flex items-start gap-2 text-xs">
+                  <span className="text-zinc-600 shrink-0 w-14">{fmt(ev.timestamp)}</span>
+                  <span className="shrink-0 w-3.5 text-center" style={{ color: cfg.color }}>{cfg.icon}</span>
+                  <span className="text-zinc-400">
+                    <span className="text-cyan-400 font-semibold">{ev.user}</span>
                     {ev.type === 'join'   && ' joined the room'}
                     {ev.type === 'leave'  && ' left the room'}
                     {ev.type === 'change' && (
-                      <> changed <span style={{ fontFamily: 'monospace', background: 'rgba(99,102,241,0.15)', color: '#818cf8', padding: '1px 5px', borderRadius: 4 }}>L{ev.fromLine}–L{ev.toLine}</span></>
+                      <> changed <span className="font-mono bg-indigo-500/15 text-indigo-400 px-1.5 py-0.5 rounded ml-1">L{ev.fromLine}–L{ev.toLine}</span></>
                     )}
                     {ev.type === 'cursor' && (
-                      <> moved to <span style={{ color: '#f59e0b' }}>L{ev.line}</span></>
+                      <> moved to <span className="text-amber-500 ml-1">L{ev.line}</span></>
                     )}
                   </span>
                 </div>
@@ -149,8 +133,8 @@ const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab
 
         {/* TERMINAL */}
         {activeTab === 'terminal' && (
-          <span style={{ color: '#858585', fontStyle: 'italic' }}>
-            <span style={{ color: '#10b981' }}>$</span> Interactive terminal not available in collaborative mode.
+          <span className="text-zinc-500 italic">
+            <span className="text-emerald-500">$</span> Interactive terminal not available in collaborative mode.
           </span>
         )}
 
@@ -159,7 +143,7 @@ const Terminal = ({ language, isRunning, terminalOutput, activeTab, setActiveTab
           <iframe
             srcDoc={previewContent}
             sandbox="allow-scripts"
-            style={{ width: '100%', height: '100%', border: 'none', borderRadius: 6, background: '#fff' }}
+            className="w-full h-full border-none rounded-md bg-white"
             title="HTML/CSS Preview"
           />
         )}

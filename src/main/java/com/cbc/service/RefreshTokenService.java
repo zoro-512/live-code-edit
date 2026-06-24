@@ -34,12 +34,11 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(String email) {
-        RefreshToken refreshToken = new RefreshToken();
-
         var user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
-        refreshTokenRepository.deleteByUser(user);
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
+                .orElse(new RefreshToken());
 
         refreshToken.setUser(user);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshDurationMs));

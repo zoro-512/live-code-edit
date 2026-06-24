@@ -44,22 +44,6 @@ const icons = {
   ),
 };
 
-const iconBtn = (active, danger) => ({
-  width: 48,
-  height: 48,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  background: 'transparent',
-  border: 'none',
-  cursor: 'pointer',
-  color: active ? '#e1e1e1' : danger ? '#858585' : '#858585',
-  borderLeft: active ? '2px solid #6366f1' : '2px solid transparent',
-  transition: 'color .15s, border-color .15s',
-  position: 'relative',
-  flexShrink: 0,
-});
-
 const ActivityBar = ({ activeSidePanel, setActiveSidePanel, onSettingsClick }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -71,35 +55,23 @@ const ActivityBar = ({ activeSidePanel, setActiveSidePanel, onSettingsClick }) =
   ];
 
   return (
-    <aside
-      style={{
-        gridArea: 'act',
-        width: 48,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: '#252526',
-        borderRight: '1px solid #2d2d2d',
-        zIndex: 10,
-        overflow: 'hidden',
-      }}
+    <aside 
+      className="w-12 flex flex-col justify-between items-center bg-zinc-950 border-r border-zinc-800 z-10 overflow-hidden" 
+      style={{ gridArea: 'act' }}
     >
       {/* Top buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <div className="flex flex-col w-full">
         {/* Back to dashboard */}
         <button
           title="Dashboard"
           onClick={() => navigate('/dashboard')}
-          style={iconBtn(false, false)}
-          onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-          onMouseLeave={e => e.currentTarget.style.color = '#858585'}
+          className="w-12 h-12 flex items-center justify-center border-none cursor-pointer text-zinc-400 hover:text-white border-l-2 border-transparent transition-colors flex-shrink-0 bg-transparent"
         >
           {icons.back}
         </button>
 
         {/* Divider */}
-        <div style={{ height: 1, background: '#3d3d3d', margin: '4px 10px' }} />
+        <div className="h-px bg-zinc-800 mx-2 my-1" />
 
         {topItems.map(item => {
           const active = activeSidePanel === item.id;
@@ -108,9 +80,7 @@ const ActivityBar = ({ activeSidePanel, setActiveSidePanel, onSettingsClick }) =
               key={item.id}
               title={item.title}
               onClick={() => setActiveSidePanel(active ? null : item.id)}
-              style={iconBtn(active, false)}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.color = '#858585'; }}
+              className={`w-12 h-12 flex items-center justify-center border-none cursor-pointer transition-colors flex-shrink-0 border-l-2 ${active ? 'text-zinc-100 border-indigo-500 bg-zinc-900' : 'text-zinc-400 border-transparent hover:text-white bg-transparent'}`}
             >
               {item.icon}
             </button>
@@ -119,22 +89,18 @@ const ActivityBar = ({ activeSidePanel, setActiveSidePanel, onSettingsClick }) =
       </div>
 
       {/* Bottom buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <div className="flex flex-col w-full">
         <button
           title="Settings"
           onClick={onSettingsClick}
-          style={iconBtn(false, false)}
-          onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-          onMouseLeave={e => e.currentTarget.style.color = '#858585'}
+          className="w-12 h-12 flex items-center justify-center border-none cursor-pointer text-zinc-400 hover:text-white border-l-2 border-transparent transition-colors flex-shrink-0 bg-transparent"
         >
           {icons.settings}
         </button>
         <button
           title="Log Out"
           onClick={() => { logout(); navigate('/'); }}
-          style={iconBtn(false, true)}
-          onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-          onMouseLeave={e => e.currentTarget.style.color = '#858585'}
+          className="w-12 h-12 flex items-center justify-center border-none cursor-pointer text-zinc-400 hover:text-red-500 border-l-2 border-transparent transition-colors flex-shrink-0 bg-transparent"
         >
           {icons.logout}
         </button>

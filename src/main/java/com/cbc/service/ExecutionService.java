@@ -39,7 +39,7 @@ public class ExecutionService {
 
             ExecuteCodeResponse executionResponse;
             if ("java".equalsIgnoreCase(request.language())) {
-                executionResponse = javaExecutor.execute(request.sourceCode());
+                executionResponse = javaExecutor.execute(request.files());
             } else {
                 executionResponse = ExecuteCodeResponse.builder()
                         .stdout("")

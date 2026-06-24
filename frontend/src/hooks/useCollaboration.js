@@ -32,10 +32,11 @@ const base64ToUint8Array = (base64) => {
 export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) => {
     const [members, setMembers] = useState([]);
     const [connectionStatus, setConnectionStatus] = useState('DISCONNECTED');
+    const [fileNames, setFileNames] = useState(['Main.java']);
     
     const stompClientRef = useRef(null);
     const yDocRef = useRef(new Y.Doc());
-    const yTextRef = useRef(yDocRef.current.getText('monaco'));
+    const yMapRef = useRef(yDocRef.current.getMap('workspace-files'));
     const monacoBindingRef = useRef(null);
     const awarenessRef = useRef(new awarenessProtocol.Awareness(yDocRef.current));
     const hasSyncedRef = useRef(false);
@@ -57,11 +58,67 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                     client.send('/app/chat.send', {}, JSON.stringify(updateMessage));
                 }
             }
+            
+            // Trigger auto-save whenever the document is modified (debounced)
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = setTimeout(() => {
+                const files = getAllFiles();
+                api.post(`/room/${roomId}/save`, { code: JSON.stringify(files) })
+                    .catch(err => console.error('Failed to auto-save code:', err));
+            }, 2000);
         };
 
         yDocRef.current.on('update', handleYjsUpdate);
 
+        const updateCursorStyles = () => {
+            let css = '';
+            awarenessRef.current.getStates().forEach((state, clientID) => {
+                if (state.user) {
+                    const color = state.user.color || '#f59e0b';
+                    const name = state.user.name || 'User';
+                    css += `
+.yRemoteSelection-${clientID} {
+  background-color: ${color}33;
+}
+.yRemoteSelectionHead-${clientID} {
+  border-left: 2px solid ${color};
+  position: absolute;
+  height: 100%;
+  box-sizing: border-box;
+  z-index: 99;
+}
+.yRemoteSelectionHead-${clientID}::after {
+  content: '${name}';
+  display: block;
+  position: absolute;
+  top: -18px;
+  left: -2px;
+  color: white;
+  background-color: ${color};
+  font-size: 11px;
+  font-family: sans-serif;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border-bottom-left-radius: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+`;
+                }
+            });
+            let styleEl = document.getElementById('yjs-cursors-style');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'yjs-cursors-style';
+                document.head.appendChild(styleEl);
+            }
+            styleEl.innerHTML = css;
+        };
+
         const handleAwarenessUpdate = ({ added, updated, removed }, origin) => {
+            updateCursorStyles();
             if (origin !== 'websocket') {
                 const changedClients = added.concat(updated, removed);
                 const update = awarenessProtocol.encodeAwarenessUpdate(awarenessRef.current, changedClients);
@@ -83,27 +140,25 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             color: getColor(userEmail)
         });
 
-        const handleTextObserve = () => {
-            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-            saveTimeoutRef.current = setTimeout(() => {
-                const plainText = yTextRef.current.toString();
-                api.post(`/room/${roomId}/save`, { code: plainText })
-                    .catch(err => console.error('Failed to auto-save code:', err));
-            }, 2000); 
+        const handleMapObserve = () => {
+            const currentFiles = Array.from(yMapRef.current.keys());
+            if (currentFiles.length === 0) {
+                currentFiles.push('Main.java');
+            }
+            setFileNames(currentFiles);
         };
-        yTextRef.current.observe(handleTextObserve);
+        yMapRef.current.observeDeep(handleMapObserve);
 
         connectWebSocket();
 
         return () => {
             yDocRef.current.off('update', handleYjsUpdate);
             awarenessRef.current.off('update', handleAwarenessUpdate);
-            yTextRef.current.unobserve(handleTextObserve);
+            yMapRef.current.unobserveDeep(handleMapObserve);
             disconnectWebSocket();
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
             if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
             if (monacoBindingRef.current) monacoBindingRef.current.destroy();
-            awarenessRef.current.destroy();
         };
     }, [roomId]);
 
@@ -118,6 +173,11 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         client.connect(headers, (frame) => {
+            // Check if component unmounted while connecting
+            if (stompClientRef.current !== client) {
+                client.disconnect();
+                return;
+            }
             setConnectionStatus('CONNECTED');
             
             client.subscribe(`/topic/room/${roomId}`, (messageOutput) => {
@@ -143,9 +203,28 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                         .then(response => {
                             if (!hasSyncedRef.current) {
                                 if (response.data) {
-                                    yTextRef.current.insert(0, response.data);
+                                    try {
+                                        const parsedFiles = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+                                        for (const [filename, content] of Object.entries(parsedFiles)) {
+                                            const fileText = getFileText(filename);
+                                            if (fileText.length === 0) {
+                                                fileText.insert(0, content);
+                                            }
+                                        }
+                                        setFileNames(Object.keys(parsedFiles));
+                                    } catch (e) {
+                                        const mainFile = getFileText('Main.java');
+                                        if (mainFile.length === 0) {
+                                            mainFile.insert(0, response.data);
+                                        }
+                                        setFileNames(['Main.java']);
+                                    }
                                 } else {
-                                    yTextRef.current.insert(0, 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
+                                    const mainFile = getFileText('Main.java');
+                                    if (mainFile.length === 0) {
+                                        mainFile.insert(0, `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Main!");\n    }\n}`);
+                                    }
+                                    setFileNames(['Main.java']);
                                 }
                                 hasSyncedRef.current = true;
                             }
@@ -153,7 +232,10 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                         .catch(err => {
                             console.error('Failed to fetch DB fallback state:', err);
                             if (!hasSyncedRef.current) {
-                                yTextRef.current.insert(0, 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
+                                const mainFile = getFileText('Main.java');
+                                if (mainFile.length === 0) {
+                                    mainFile.insert(0, `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Main!");\n    }\n}`);
+                                }
                                 hasSyncedRef.current = true;
                             }
                         });
@@ -161,18 +243,30 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             }, 1500);
 
         }, (error) => {
-            setConnectionStatus('DISCONNECTED');
+            if (stompClientRef.current === client) {
+                setConnectionStatus('DISCONNECTED');
+            }
             console.error('STOMP connection failed:', error);
         });
     };
 
     const disconnectWebSocket = () => {
         const client = stompClientRef.current;
-        if (client && client.connected) {
-            const leftMessage = { roomId, creator: userEmail, content: `${userEmail} left the session.`, messageType: 'LEFT' };
+        stompClientRef.current = null;
+        if (client) {
             try {
-                client.send('/app/chat.send', {}, JSON.stringify(leftMessage));
-                client.disconnect(() => setConnectionStatus('DISCONNECTED'));
+                if (client.connected) {
+                    const leftMessage = { roomId, creator: userEmail, content: `${userEmail} left the session.`, messageType: 'LEFT' };
+                    client.send('/app/chat.send', {}, JSON.stringify(leftMessage));
+                    client.disconnect(() => {
+                        setConnectionStatus('DISCONNECTED');
+                    });
+                } else {
+                    if (client.ws) {
+                        client.ws.onclose = null;
+                        client.ws.close();
+                    }
+                }
             } catch (e) {
                 console.error('Failed clean websocket disconnect:', e);
             }
@@ -185,7 +279,7 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         } else if (msg.messageType === 'LEFT') {
             setMembers(prev => prev.filter(email => email !== msg.creator));
         } else if (msg.messageType === 'YJS_SYNC_REQUEST') {
-            if (msg.creator !== userEmail && hasSyncedRef.current) {
+            if (hasSyncedRef.current) {
                 // Send current document state
                 const stateUpdate = Y.encodeStateAsUpdate(yDocRef.current);
                 const syncResponse = { roomId, creator: userEmail, content: uint8ArrayToBase64(stateUpdate), messageType: 'YJS_SYNC_RESPONSE' };
@@ -203,31 +297,63 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                 hasSyncedRef.current = true;
             }
         } else if (msg.messageType === 'YJS_UPDATE') {
-            if (msg.creator !== userEmail) {
+            try {
                 Y.applyUpdate(yDocRef.current, base64ToUint8Array(msg.content), 'websocket-update');
+            } catch (e) {
+                console.error("Failed to apply update", e);
             }
         } else if (msg.messageType === 'YJS_AWARENESS') {
-            if (msg.creator !== userEmail) {
+            try {
                 awarenessProtocol.applyAwarenessUpdate(awarenessRef.current, base64ToUint8Array(msg.content), 'websocket');
+            } catch (e) {
+                console.error("Failed to apply awareness", e);
             }
         } else if (msg.messageType === 'EXECUTION_START' || msg.messageType === 'EXECUTION_RESULT') {
             onExecutionMessage(msg);
         }
     };
 
-    const bindEditor = (editor) => {
+    const getFileText = (filename) => {
+        if (!yMapRef.current.has(filename)) {
+            yMapRef.current.set(filename, true);
+        }
+        return yDocRef.current.getText(filename);
+    };
+
+    const bindEditor = (editor, filename = 'Main.java') => {
         if (monacoBindingRef.current) {
             monacoBindingRef.current.destroy();
         }
         monacoBindingRef.current = new MonacoBinding(
-            yTextRef.current,
+            getFileText(filename),
             editor.getModel(),
             new Set([editor]),
             awarenessRef.current
         );
     };
 
-    const getCurrentCode = () => yTextRef.current.toString();
+    const getAllFiles = () => {
+        const files = {};
+        for (const name of yMapRef.current.keys()) {
+            files[name] = getFileText(name).toString();
+        }
+        if (Object.keys(files).length === 0) {
+            files['Main.java'] = getFileText('Main.java').toString();
+        }
+        return files;
+    };
 
-    return { members, connectionStatus, bindEditor, getCurrentCode };
+    const createFile = (filename) => {
+        if (!yMapRef.current.has(filename)) {
+            yMapRef.current.set(filename, true);
+            
+            // Force immediate save to prevent data loss on quick refresh
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+            const files = getAllFiles();
+            api.post(`/room/${roomId}/save`, { code: JSON.stringify(files) })
+                .catch(err => console.error('Failed to auto-save code:', err));
+        }
+    };
+
+    return { members, connectionStatus, bindEditor, getAllFiles, getFileText, fileNames, createFile };
 };

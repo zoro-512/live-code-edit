@@ -141,7 +141,7 @@ export const useCodeExecution = (roomId) => {
         setTimeout(() => setIsRunning(false), 300);
     };
 
-    const handleRunCode = async (language, currentCode) => {
+    const handleRunCode = async (language, currentCode, files = {}) => {
         setIsRunning(true);
         setShowTerminal(true);
         setTerminalOutput(null);
@@ -155,7 +155,7 @@ export const useCodeExecution = (roomId) => {
         } else if (language === 'java') {
             setActiveTab('console');
             try {
-                await api.post('/execute/run', { sourceCode: currentCode, language, roomId });
+                await api.post('/execute/run', { files, language, roomId });
             } catch (err) {
                 console.error('Code execution failed:', err);
                 const errorMessage = err.response?.data?.message || err.message || 'Unknown network error';

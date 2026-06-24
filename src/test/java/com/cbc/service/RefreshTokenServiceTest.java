@@ -55,6 +55,7 @@ class RefreshTokenServiceTest {
         user.setEmail("test@test.com");
 
         when(userRepo.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(refreshTokenRepository.findByUser(user)).thenReturn(Optional.empty());
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArguments()[0]);
 
         RefreshToken result = refreshTokenService.createRefreshToken("test@test.com");
@@ -62,7 +63,7 @@ class RefreshTokenServiceTest {
         assertNotNull(result);
         assertNotNull(result.getToken());
         assertEquals(user, result.getUser());
-        verify(refreshTokenRepository).deleteByUser(user);
+        verify(refreshTokenRepository).findByUser(user);
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 

@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import java.util.Map;
+
 @Slf4j
 @Service
 public class JavaExecutor implements CodeExecutor {
@@ -24,7 +26,7 @@ public class JavaExecutor implements CodeExecutor {
     private String hostPathConfig;
 
     @Override
-    public ExecuteCodeResponse execute(String code) {
+    public ExecuteCodeResponse execute(Map<String, String> files) {
         Path tempDir = null;
         try {
             String uuid = UUID.randomUUID().toString();
@@ -36,13 +38,17 @@ public class JavaExecutor implements CodeExecutor {
                 tempDir = Files.createTempDirectory("execution-" + uuid);
             }
 
-            Path javaFile = tempDir.resolve("Main.java");
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+                Path javaFile = tempDir.resolve(entry.getKey());
+                Files.createDirectories(javaFile.getParent());
+                Files.writeString(
+                        javaFile,
+                        entry.getValue(),
+                        StandardCharsets.UTF_8
+                );
+            }
+
             String containerName = "exec-" + uuid;
-            Files.writeString(
-                    javaFile,
-                    code,
-                    StandardCharsets.UTF_8
-            );
 
             String hostPath;
             if (hostPathConfig != null && !hostPathConfig.trim().isEmpty()) {
@@ -67,7 +73,7 @@ public class JavaExecutor implements CodeExecutor {
                             "java-runner",
                             "sh",
                             "-c",
-                            "javac Main.java && java Main"
+                            "find . -name '*.java' > sources.txt && javac @sources.txt && java Main"
                     );
             Path stdoutFile = tempDir.resolve("stdout.txt");
 
