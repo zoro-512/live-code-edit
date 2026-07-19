@@ -1,25 +1,13 @@
 #  Collaborative Code Editor (CBC)
 
 [![Java Version](https://img.shields.io/badge/Java-17%20%2F%2021-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1+-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-19-blue.svg?style=flat-square&logo=react)](https://react.dev/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
+[![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Orchestrated-blue.svg?style=flat-square&logo=docker)](https://www.docker.com/)
 
-An interactive, browser-native real-time collaborative development workspace. The platform integrates Conflict-Free Replicated Data Types (CRDTs) to facilitate concurrent code editing and provides isolated, multi-language execution sandboxes.
+An interactive, browser-native real-time collaborative development workspace. The platform integrates Conflict-Free Replicated Data Types (CRDTs) to facilitate concurrent code editing and provides isolated, multi-language compilation sandboxes spanning both client-side and server-side runtimes.
 
 **🟢 Live Demo:** [https://live-code-edit.onrender.com/](https://live-code-edit.onrender.com/)
-
----
-
-## 🚀 Key Features
-
-* **Real-time CRDT Document Synchronization**: Employs **Yjs** and **y-monaco** for peer-to-peer real-time document synchronization. Transmits optimized Base64-encoded binary delta updates over STOMP WebSockets to resolve concurrent edit conflicts.
-* **Isolated Multi-Runtime Compilation Sandboxes**:
-  * **Server-Side Runtime (Java)**: Executes Java programs securely in isolated, resource-constrained container environments (`128MB RAM / 1 CPU`) using Docker-out-of-Docker (DooD) socket communication. *(Note: Java execution is disabled on the free cloud deployment due to Docker constraints).*
-  * **Client-Side Runtime (JS, HTML, CSS)**: Compiles and runs browser-native execution profiles locally using sandboxed HTML `<iframe>` windows. Intercepts console logging outputs using window event messaging and provides an interactive visual web preview panel.
-* **Unified Console Output & Live Previews**: Integrates a dark console panel capturing standard output stream, standard error, process exit codes, and millisecond execution times.
-* **Stateless Security & RBAC**: API endpoints and WebSocket channels secured using stateless JWT authentication with Spring Security filtering.
-* **Workspace Management Dashboard**: Modern workspace panel providing real-time peer presence status, shared room creation, and dynamic join token authorization.
 
 ---
 
@@ -27,11 +15,14 @@ An interactive, browser-native real-time collaborative development workspace. Th
 
 ```text
 cbc/
+├── docker-runner/             # Sandboxed Java compiler Docker configurations
+│   └── Dockerfile             # Java OpenJDK executor image blueprint
 ├── frontend/                  # React (Vite) Single Page Application
 │   ├── src/
-│   │   ├── components/        # Reusable UI containers
-│   │   ├── hooks/             # Custom React hooks (WebSockets, Code Execution)
+│   │   ├── components/        # Reusable UI containers (ProtectedRoutes)
+│   │   ├── context/           # Global AuthContext & Axios Interceptors
 │   │   └── pages/             # Auth portal, Dashboard explorer, Workspace page
+│   └── Dockerfile             # Multi-stage production build (Node + Nginx)
 ├── src/                       # Spring Boot Backend API Server
 │   └── main/java/com/cbc/
 │       ├── config/            # JWT & Security config
@@ -39,71 +30,77 @@ cbc/
 │       ├── dto/               # Data Transfer Objects
 │       ├── entity/            # Hibernate database entity mapping
 │       ├── repository/        # Spring Data JPA repositories
-│       └── service/           # Core logic (Code execution, Rooms)
-├── docker-runner/             # Sandboxed Java compiler Docker configurations
-├── docker-compose.yml         # Network & services orchestration for local dev
+│       └── service/           # Core logic (Java sandboxed execution, Rooms)
+├── Dockerfile                 # Multi-stage JRE runtime backend image
+├── docker-compose.yml         # Network & services orchestration
 ├── .env.example               # Environment variables template
 └── README.md                  # System Documentation
 ```
 
 ---
 
-## ☁️ Cloud Deployment (Render)
+## 🚀 Key Features
 
-This application is fully compatible with Render's Free Tier using PostgreSQL as the database.
-
-### Frontend Deployment
-1. Connect your GitHub repository to a **Static Site** on Render.
-2. Build Command: `npm install && npm run build`
-3. Publish Directory: `dist`
-4. Add Environment Variable:
-   * `VITE_API_BASE_URL`: `https://your-backend-url.onrender.com`
-
-### Backend Deployment
-1. Create a **PostgreSQL** database on Render.
-2. Connect your GitHub repository to a **Web Service** on Render.
-3. Select Docker or Java as the runtime.
-4. Add Environment Variables:
-   * `SPRING_DATASOURCE_URL`: `jdbc:postgresql://<internal-db-host>/<db-name>`
-   * `SPRING_DATASOURCE_USERNAME`: `<db-user>`
-   * `SPRING_DATASOURCE_PASSWORD`: `<db-password>`
-   * `CORS_ALLOWED_ORIGINS`: `https://your-frontend-url.onrender.com`
-   * `RENDER`: `true`
+* **Real-time CRDT Document Synchronization**: Employs **Yjs** and **y-monaco** for peer-to-peer real-time document synchronization. Transmits optimized Base64-encoded binary delta updates over STOMP WebSockets to resolve concurrent edit conflicts mathematically using state-vector vector clocks while preserving cursor and editor consistency.
+* **Isolated Multi-Runtime Compilation Sandboxes**:
+  *   **Server-Side Runtime (Java)**: Executes Java programs securely in isolated, resource-constrained container environments (`128MB RAM / 1 CPU`) using Docker-out-of-Docker (DooD) socket communication.
+  *   **Client-Side Runtime (JS, HTML, CSS)**: Compiles and runs browser-native execution profiles locally using sandboxed HTML `<iframe>` windows (isolated via `sandbox="allow-scripts"`). Intercepts console logging outputs using window event messaging and provides an interactive visual web preview panel.
+* **Unified Console Output & Live Previews**: Integrates a dark console panel capturing standard output stream, standard error, process exit codes, and millisecond execution times, complemented by a live web preview container.
+* **Stateless Security & RBAC**: API endpoints and WebSocket channels secured using stateless JWT authentication with Spring Security filtering.
+* **Workspace Management Dashboard**: Modern workspace panel providing real-time peer presence status, shared room creation, and dynamic join token authorization.
 
 ---
 
-## 📥 Local Development Setup
+## 🏗️ How the Sandboxed Execution Works
+
+When a user selects Java and clicks **Run**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Developer (Browser)
+    participant BE as Backend Container (Spring Boot)
+    participant Host as Host Daemon (Docker Socket)
+    participant Runner as Sibling Container (java-runner)
+
+    Dev->>BE: POST /execute/run (code payload)
+    Note over BE: Writes Main.java into shared volume /app/temp/uuid/
+    BE->>Host: docker run -v HOST_PATH/uuid:/app java-runner
+    Host->>Runner: Start Sandboxed Container
+    Note over Runner: Runs: javac Main.java && java Main
+    Runner-->>Host: Standard output & errors
+    Note over Host: Destroys & removes container
+    Host-->>BE: Stream execution results
+    BE-->>Dev: Return HTTP Response (stdout, stderr, executionTime)
+```
+
+---
+
+## 📥 Getting Started
 
 ### 1. Configure the Environment
 Clone the repository and copy the `.env.example` file to create your local `.env` configuration:
-```bash
-cp .env.example .env
-```
+* **Linux / macOS:**
+  ```bash
+  cp .env.example .env
+  ```
+* **Windows (PowerShell):**
+  ```powershell
+  copy .env.example .env
+  ```
 
 > [!IMPORTANT]  
-> If using Java execution locally, update **`EXECUTION_HOST_PATH`** to point to the absolute path of the `temp/` folder on your local machine (e.g. `C:/Users/name/Downloads/cbc/temp`). Use forward slashes `/`.
+> Open your `.env` file and update **`EXECUTION_HOST_PATH`** to point to the absolute path of the `temp/` folder on your local Windows/Linux host machine (e.g. `C:/Users/siddh/Downloads/cbc/temp`). Use forward slashes `/` for paths even on Windows.
 
-### 2. Database Setup
-Ensure you have MySQL or PostgreSQL running locally, and update `application.properties` with your database credentials. Alternatively, you can use the provided `docker-compose.yml` to spin up a local MySQL instance:
+### 2. Start the Stack (One Command)
+Build the Sandboxed Code Runner and launch all services in detached background mode:
 ```bash
-docker compose up -d mysql
+docker compose up --build -d
 ```
 
-### 3. Run the Backend (Spring Boot)
-Run the application using Maven wrapper or your IDE:
-```bash
-mvn spring-boot:run
-```
-The backend API will start on `http://localhost:8081`.
-
-### 4. Run the Frontend (React / Vite)
-Open a new terminal, navigate to the `frontend` folder, and start the Vite dev server:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-The frontend will start on `http://localhost:5173`.
+### 3. Access the Application
+* **Frontend**: Open [http://localhost](http://localhost) in your browser (served on Nginx Port 80).
+* **Backend API Specs (Swagger UI)**: Open [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) (enabled for public access in Spring Security).
 
 ---
 
@@ -112,13 +109,41 @@ The frontend will start on `http://localhost:5173`.
 ### 🔐 Authentication (`/auth`)
 * `POST /auth/signup` - Registers a new user. Accepts JSON: `{ "name", "email", "password" }`.
 * `POST /auth/login` - Authenticates a user. Returns JSON: `{ "accessToken", "refreshToken", "email" }`.
+* `POST /auth/refreshtoken` - Refreshes an expired JWT. Accepts JSON: `{ "refreshToken" }`.
+
+### 👤 User Profile (`/user`)
+* `GET /user/me` - Retrieves the authenticated user's profile details.
+* `PUT /user/me` - Updates the authenticated user's profile.
 
 ### 🏠 Rooms (`/room`)
 * `POST /room/create` - Creates a new room. Accepts JSON: `{ "roomName" }`.
 * `POST /room/join` - Joins an existing room using a code. Accepts JSON: `{ "roomCode" }`.
 * `GET /room/myRooms` - Fetches all workspaces joined/created by the authenticated user.
-* `GET /room/{roomId}/code` - Retrieves the currently saved code.
+* `GET /room/{roomId}/code` - Retrieves the currently saved code map.
 * `POST /room/{roomId}/save` - Auto-saves active edits.
+* `DELETE /room/{roomId}` - Deletes an existing room.
 
 ### 💻 Code Execution (`/execute`)
-* `POST /execute/run` - Triggers compiler sandbox (Local only). Accepts JSON: `{ "files": { "Main.java": "..." }, "language", "roomId" }`.
+* `POST /execute/run` - Triggers compiler sandbox. Accepts JSON: `{ "files": { "Main.java": "..." }, "language", "roomId" }`.
+
+---
+
+## 🛠️ Troubleshooting
+
+### 1. Port Binding Conflicts (Address already in use)
+If you get a bind error for port `3306` (e.g., `bind: Only one usage of each socket address is normally permitted`):
+* Your machine already has MySQL running locally.
+* We have configured the host port to bind to **`3307`** in `docker-compose.yml`. You do not need to change anything; your local MySQL can keep running.
+
+### 2. "File not found: Main.java" Error on Code Execution
+If the terminal prints a compilation error stating `Main.java` cannot be found:
+* Ensure you have restarted the backend container after saving your `.env` file path.
+* Double-check that `EXECUTION_HOST_PATH` in `.env` is set to the absolute path of your local workspace `temp` folder using forward slashes (e.g. `C:/Users/siddh/Downloads/cbc/temp`).
+
+---
+
+## 🛑 Shutting Down
+To safely stop and remove all application containers and virtual networks:
+```bash
+docker compose down
+```
