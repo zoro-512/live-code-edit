@@ -208,8 +208,17 @@ const Workspace = () => {
     monaco.editor.setTheme(currentTheme);
   }, [monaco, currentTheme]);
 
+  const activeFileRef = useRef(activeFile);
+  useEffect(() => {
+    activeFileRef.current = activeFile;
+  }, [activeFile]);
+
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor;
+
+    editor.onDidChangeModel(() => {
+      bindEditor(editor, activeFileRef.current);
+    });
 
     editor.onDidChangeCursorPosition((e) => {
       setEditorLine(e.position.lineNumber);
@@ -234,14 +243,8 @@ const Workspace = () => {
       }, 1500);
     });
 
-    bindEditor(editor, activeFile);
+    bindEditor(editor, activeFileRef.current);
   };
-
-  useEffect(() => {
-    if (editorRef.current) {
-      bindEditor(editorRef.current, activeFile);
-    }
-  }, [activeFile, bindEditor]);
 
   const applyTheme = (themeId) => {
     setCurrentTheme(themeId);
@@ -411,6 +414,7 @@ const Workspace = () => {
             <MonacoEditor
               height="100%"
               language={language}
+              path={activeFile}
               onMount={handleEditorDidMount}
               options={{
                 selectOnLineNumbers: true,
