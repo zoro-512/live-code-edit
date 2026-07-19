@@ -324,6 +324,11 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         if (monacoBindingRef.current) {
             monacoBindingRef.current.destroy();
         }
+        
+        // Prevent Monaco from overwriting Yjs text with the previous file's content
+        const text = getFileText(filename).toString();
+        editor.setValue(text);
+
         monacoBindingRef.current = new MonacoBinding(
             getFileText(filename),
             editor.getModel(),
