@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
 import * as Y from 'yjs';
@@ -313,14 +313,14 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         }
     };
 
-    const getFileText = (filename) => {
+    const getFileText = useCallback((filename) => {
         if (!yMapRef.current.has(filename)) {
             yMapRef.current.set(filename, true);
         }
         return yDocRef.current.getText(filename);
-    };
+    }, []);
 
-    const bindEditor = (editor, filename = 'index.js') => {
+    const bindEditor = useCallback((editor, filename = 'index.js') => {
         if (monacoBindingRef.current) {
             monacoBindingRef.current.destroy();
         }
@@ -335,9 +335,9 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             new Set([editor]),
             awarenessRef.current
         );
-    };
+    }, [getFileText]);
 
-    const getAllFiles = () => {
+    const getAllFiles = useCallback(() => {
         const files = {};
         for (const name of yMapRef.current.keys()) {
             files[name] = getFileText(name).toString();
@@ -346,9 +346,9 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             files['index.js'] = getFileText('index.js').toString();
         }
         return files;
-    };
+    }, [getFileText]);
 
-    const createFile = (filename) => {
+    const createFile = useCallback((filename) => {
         if (!yMapRef.current.has(filename)) {
             yMapRef.current.set(filename, true);
             
@@ -358,7 +358,7 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             api.post(`/room/${roomId}/save`, { code: JSON.stringify(files) })
                 .catch(err => console.error('Failed to auto-save code:', err));
         }
-    };
+    }, [getAllFiles, roomId]);
 
     return { members, connectionStatus, bindEditor, getAllFiles, getFileText, fileNames, createFile };
 };
