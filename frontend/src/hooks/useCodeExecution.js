@@ -147,6 +147,7 @@ export const useCodeExecution = (roomId) => {
         setTerminalOutput(null);
 
         if (language === 'javascript') {
+            setActiveTab('console');
             runJavaScriptLocal(currentCode);
         } else if (language === 'html') {
             runHtmlLocal(currentCode);
