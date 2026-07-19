@@ -121,7 +121,7 @@ const Workspace = () => {
 
   const [roomName]   = useState(location.state?.roomName || 'Workspace');
   const [roomCode]   = useState(location.state?.roomCode || '');
-  const [language, setLanguage] = useState('java');
+  const [language, setLanguage] = useState('javascript');
   const [editorLine, setEditorLine] = useState(1);
   const [editorCol,  setEditorCol]  = useState(1);
 
@@ -164,8 +164,8 @@ const Workspace = () => {
     roomId, userEmail, token, handleCollabMessage,
   );
 
-  const [openTabs, setOpenTabs] = useState([{ name: 'Main.java', ext: 'java', modified: false }]);
-  const [activeFile, setActiveFile] = useState('Main.java');
+  const [openTabs, setOpenTabs] = useState([{ name: 'index.js', ext: 'js', modified: false }]);
+  const [activeFile, setActiveFile] = useState('index.js');
 
   const handleOpenFile = (name) => {
     if (!openTabs.find(t => t.name === name)) {

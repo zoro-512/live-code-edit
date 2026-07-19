@@ -31,7 +31,7 @@ const Sidebar = ({ roomName, roomCode, members = [], userEmail, activeSidePanel,
       else if (name.endsWith('.html')) dotColor = '#e44d26';
       else if (name.endsWith('.css')) dotColor = '#38bdf8';
       else if (name.endsWith('.py')) dotColor = '#3572a5';
-      else if (name === 'Main.java') dotColor = '#6366f1';
+      else if (name === 'index.js') dotColor = '#6366f1';
       return { name, dot: dotColor };
     })
   };

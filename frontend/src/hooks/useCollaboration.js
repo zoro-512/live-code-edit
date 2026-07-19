@@ -32,7 +32,7 @@ const base64ToUint8Array = (base64) => {
 export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) => {
     const [members, setMembers] = useState([]);
     const [connectionStatus, setConnectionStatus] = useState('DISCONNECTED');
-    const [fileNames, setFileNames] = useState(['Main.java']);
+    const [fileNames, setFileNames] = useState(['index.js']);
     
     const stompClientRef = useRef(null);
     const yDocRef = useRef(new Y.Doc());
@@ -143,7 +143,7 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         const handleMapObserve = () => {
             const currentFiles = Array.from(yMapRef.current.keys());
             if (currentFiles.length === 0) {
-                currentFiles.push('Main.java');
+                currentFiles.push('index.js');
             }
             setFileNames(currentFiles);
         };
@@ -213,18 +213,18 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                                         }
                                         setFileNames(Object.keys(parsedFiles));
                                     } catch (e) {
-                                        const mainFile = getFileText('Main.java');
+                                        const mainFile = getFileText('index.js');
                                         if (mainFile.length === 0) {
                                             mainFile.insert(0, response.data);
                                         }
-                                        setFileNames(['Main.java']);
+                                        setFileNames(['index.js']);
                                     }
                                 } else {
-                                    const mainFile = getFileText('Main.java');
+                                    const mainFile = getFileText('index.js');
                                     if (mainFile.length === 0) {
-                                        mainFile.insert(0, `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Main!");\n    }\n}`);
+                                        mainFile.insert(0, `console.log("Hello from index.js!");`);
                                     }
-                                    setFileNames(['Main.java']);
+                                    setFileNames(['index.js']);
                                 }
                                 hasSyncedRef.current = true;
                             }
@@ -232,9 +232,9 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                         .catch(err => {
                             console.error('Failed to fetch DB fallback state:', err);
                             if (!hasSyncedRef.current) {
-                                const mainFile = getFileText('Main.java');
+                                const mainFile = getFileText('index.js');
                                 if (mainFile.length === 0) {
-                                    mainFile.insert(0, `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Main!");\n    }\n}`);
+                                    mainFile.insert(0, `console.log("Hello from index.js!");`);
                                 }
                                 hasSyncedRef.current = true;
                             }
@@ -320,7 +320,7 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
         return yDocRef.current.getText(filename);
     };
 
-    const bindEditor = (editor, filename = 'Main.java') => {
+    const bindEditor = (editor, filename = 'index.js') => {
         if (monacoBindingRef.current) {
             monacoBindingRef.current.destroy();
         }
@@ -343,7 +343,7 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
             files[name] = getFileText(name).toString();
         }
         if (Object.keys(files).length === 0) {
-            files['Main.java'] = getFileText('Main.java').toString();
+            files['index.js'] = getFileText('index.js').toString();
         }
         return files;
     };
