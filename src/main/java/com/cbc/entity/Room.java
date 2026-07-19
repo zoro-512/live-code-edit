@@ -28,7 +28,7 @@ public class Room {
 
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String currentCode;
 
     @ManyToOne
