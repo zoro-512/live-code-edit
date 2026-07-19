@@ -342,7 +342,10 @@ const Workspace = () => {
 
           {/* Run button */}
           <button
-            onClick={() => handleRunCode(language, '', getAllFiles())}
+            onClick={() => {
+                const currentCode = getAllFiles()[activeFile] || '';
+                handleRunCode(language, currentCode, getAllFiles());
+            }}
             disabled={isRunning}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md border-none text-xs font-semibold shrink-0 ${isRunning ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-emerald-500 text-white cursor-pointer hover:bg-emerald-600'}`}
           >
