@@ -68,6 +68,7 @@ public class RoomService {
     }
 
 
+    @Transactional(readOnly = true)
     public List<RoomResponse> getMyRooms(String email) {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -96,6 +97,7 @@ public class RoomService {
 
     }
 
+    @Transactional(readOnly = true)
     public void validateRoomMembership(String email, Long roomId) {
         if (!userRepo.isUserMemberOfRoom(email, roomId)) {
             throw new org.springframework.security.access.AccessDeniedException(
@@ -117,6 +119,7 @@ public class RoomService {
         roomRepo.save(room);
     }
 
+    @Transactional(readOnly = true)
     public String getCode(Long roomId, String email) {
         validateRoomMembership(email, roomId);
 
