@@ -7,6 +7,7 @@ import com.cbc.entity.MessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class ExecutionService {
     private final CodeExecutor javaExecutor;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ObjectMapper objectMapper;
+
+    @Value("${RENDER:false}")
+    private boolean isRender;
 
     @Async("executionTaskExecutor")
     public void executeAsync(ExecuteCodeRequest request, String executorEmail) {
@@ -38,7 +42,14 @@ public class ExecutionService {
             simpMessagingTemplate.convertAndSend(destination, startMessage);
 
             ExecuteCodeResponse executionResponse;
-            if ("java".equalsIgnoreCase(request.language())) {
+            if (isRender) {
+                executionResponse = ExecuteCodeResponse.builder()
+                        .stdout("")
+                        .stderr("To run Java code, please run this application on your local machine.")
+                        .exitCode(1)
+                        .executionTime(0L)
+                        .build();
+            } else if ("java".equalsIgnoreCase(request.language())) {
                 executionResponse = javaExecutor.execute(request.files());
             } else {
                 executionResponse = ExecuteCodeResponse.builder()

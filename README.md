@@ -61,7 +61,7 @@ sequenceDiagram
     participant Host as Host Daemon (Docker Socket)
     participant Runner as Sibling Container (java-runner)
 
-    Dev->>BE: POST /execute/execute (code payload)
+    Dev->>BE: POST /execute/run (code payload)
     Note over BE: Writes Main.java into shared volume /app/temp/uuid/
     BE->>Host: docker run -v HOST_PATH/uuid:/app java-runner
     Host->>Runner: Start Sandboxed Container
@@ -106,17 +106,23 @@ docker compose up --build -d
 
 ### 🔐 Authentication (`/auth`)
 * `POST /auth/signup` - Registers a new user. Accepts JSON: `{ "name", "email", "password" }`.
-* `POST /auth/login` - Authenticates a user. Returns a raw JWT string on success.
+* `POST /auth/login` - Authenticates a user. Returns JSON: `{ "accessToken", "refreshToken", "email" }`.
+* `POST /auth/refreshtoken` - Refreshes an expired JWT. Accepts JSON: `{ "refreshToken" }`.
+
+### 👤 User Profile (`/user`)
+* `GET /user/me` - Retrieves the authenticated user's profile details.
+* `PUT /user/me` - Updates the authenticated user's profile.
 
 ### 🏠 Rooms (`/room`)
 * `POST /room/create` - Creates a new room. Accepts JSON: `{ "roomName" }`.
 * `POST /room/join` - Joins an existing room using a code. Accepts JSON: `{ "roomCode" }`.
 * `GET /room/myRooms` - Fetches all workspaces joined/created by the authenticated user.
-* `GET /room/{roomId}/code` - Retrieves the currently saved code. Defaults to a Java Boilerplate.
-* `POST /room/{roomId}/save` - Manually/automatically auto-saves active edits.
+* `GET /room/{roomId}/code` - Retrieves the currently saved code map.
+* `POST /room/{roomId}/save` - Auto-saves active edits.
+* `DELETE /room/{roomId}` - Deletes an existing room.
 
 ### 💻 Code Execution (`/execute`)
-* `POST /execute/execute` - Triggers compiler sandbox. Accepts JSON: `{ "sourceCode", "language", "roomId" }`.
+* `POST /execute/run` - Triggers compiler sandbox. Accepts JSON: `{ "files": { "Main.java": "..." }, "language", "roomId" }`.
 
 ---
 
