@@ -297,10 +297,12 @@ export const useCollaboration = (roomId, userEmail, token, onExecutionMessage) =
                 hasSyncedRef.current = true;
             }
         } else if (msg.messageType === 'YJS_UPDATE') {
-            try {
-                Y.applyUpdate(yDocRef.current, base64ToUint8Array(msg.content), 'websocket-update');
-            } catch (e) {
-                console.error("Failed to apply update", e);
+            if (msg.creator !== userEmail) {
+                try {
+                    Y.applyUpdate(yDocRef.current, base64ToUint8Array(msg.content), 'websocket-update');
+                } catch (e) {
+                    console.error("Failed to apply update", e);
+                }
             }
         } else if (msg.messageType === 'YJS_AWARENESS') {
             try {

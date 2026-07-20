@@ -209,9 +209,7 @@ const Workspace = () => {
   }, [monaco, currentTheme]);
 
   const activeFileRef = useRef(activeFile);
-  useEffect(() => {
-    activeFileRef.current = activeFile;
-  }, [activeFile]);
+  activeFileRef.current = activeFile; // Update synchronously during render
 
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor;
